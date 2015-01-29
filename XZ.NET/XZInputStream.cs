@@ -17,7 +17,7 @@ using System.Runtime.InteropServices;
 
 namespace XZ.NET
 {
-    public class XZStream : Stream
+    public class XZInputStream : Stream
     {
         private byte[] _mInternalBuffer = new byte[0];
         private LzmaStream _lzmaStream;
@@ -28,7 +28,7 @@ namespace XZ.NET
         private const int BufSize = 512;
         private const int LzmaConcatenatedFlag = 0x08;
 
-        public XZStream(Stream s)
+        public XZInputStream(Stream s)
         {
             _mInnerStream = s;
 
@@ -158,7 +158,7 @@ namespace XZ.NET
 
         public override void Write(byte[] buffer, int offset, int count)
         {
-            throw new NotImplementedException();
+            throw new NotSupportedException("XZ Input stream does not support writing");
         }
 
         public override bool CanRead
@@ -168,12 +168,12 @@ namespace XZ.NET
 
         public override bool CanSeek
         {
-            get { throw new NotSupportedException("XZ Stream does not support seeking"); }
+            get { return false; }
         }
 
         public override bool CanWrite
         {
-            get { throw new NotImplementedException(); }
+            get { return false; }
         }
 
 
