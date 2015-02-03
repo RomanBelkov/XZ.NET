@@ -17,7 +17,7 @@ namespace XZ.NET
 {
     internal enum LzmaReturn : uint
     {
-        LZMAOK = 0,
+        LzmaOK = 0,
         LzmaStreamEnd = 1,
         LzmaNoCheck = 2,
         LzmaUnsupportedCheck = 3,
@@ -111,14 +111,17 @@ namespace XZ.NET
         [DllImport("liblzma.dll", CharSet = CharSet.Ansi, CallingConvention = CallingConvention.Cdecl)]
         internal static extern LzmaReturn lzma_stream_footer_decode(ref LzmaStreamFlags options, byte[] inp);
 
-        [DllImport("liblzma.dll")]
+        [DllImport("liblzma.dll", CharSet = CharSet.Ansi, CallingConvention = CallingConvention.Cdecl)]
         internal static extern UInt64 lzma_index_uncompressed_size(IntPtr i);
 
         [DllImport("liblzma.dll", CharSet = CharSet.Ansi, CallingConvention = CallingConvention.Cdecl)]
         internal static extern UInt32 lzma_index_buffer_decode(ref IntPtr i, ref UInt64 memLimit, IntPtr allocator, byte[] indexBuffer,
             ref UInt32 inPosition, UInt64 inSize);
 
-        [DllImport("liblzma.dll")]
+        [DllImport("liblzma.dll", CharSet = CharSet.Ansi, CallingConvention = CallingConvention.Cdecl)]
         internal static extern void lzma_index_end(IntPtr i, IntPtr allocator);
+
+        [DllImport("liblzma.dll", CharSet = CharSet.Ansi, CallingConvention = CallingConvention.Cdecl)]
+        internal static extern LzmaReturn lzma_easy_encoder(ref LzmaStream stream, int preset, LzmaCheck check);
     }
 }

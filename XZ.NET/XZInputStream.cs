@@ -24,6 +24,7 @@ namespace XZ.NET
         private readonly Stream _mInnerStream;
         private readonly IntPtr _inbuf;
         private readonly IntPtr _outbuf;
+        private long _length;
 
         private const int BufSize = 512;
         private const int LzmaConcatenatedFlag = 0x08;
@@ -41,7 +42,7 @@ namespace XZ.NET
             _lzmaStream.next_out = _outbuf;
             _lzmaStream.avail_out = BufSize;
 
-            if (ret == LzmaReturn.LZMAOK)
+            if (ret == LzmaReturn.LzmaOK)
                 return;
 
             switch (ret)
@@ -89,7 +90,6 @@ namespace XZ.NET
             {
                 if (_lzmaStream.avail_in == 0)
                 {
-
                     _lzmaStream.avail_in = (uint)_mInnerStream.Read(readbuf, 0, readbuf.Length);
                     Marshal.Copy(readbuf, 0, _inbuf, (int)_lzmaStream.avail_in);
                     _lzmaStream.next_in = _inbuf;
@@ -111,7 +111,7 @@ namespace XZ.NET
                     _lzmaStream.avail_out = BufSize;
                 }
 
-                if (ret != LzmaReturn.LZMAOK)
+                if (ret != LzmaReturn.LzmaOK)
                 {
                     if (ret == LzmaReturn.LzmaStreamEnd)
                         break;
@@ -176,7 +176,6 @@ namespace XZ.NET
             get { return false; }
         }
 
-
         /// <summary>
         /// Gives a size of uncompressed data in bytes
         /// </summary>
@@ -186,9 +185,8 @@ namespace XZ.NET
             get
             {
                 const int streamFooterSize = 12;
-                long length = 0;
 
-                if (length == 0)
+                if (_length == 0)
                 {
                     var lzmaStreamFlags = new LzmaStreamFlags();
                     var streamFooter = new byte[streamFooterSize];
@@ -219,12 +217,12 @@ namespace XZ.NET
                     var uSize = Native.lzma_index_uncompressed_size(index);
 
                     Native.lzma_index_end(index, IntPtr.Zero);
-                    length = (Int64)uSize;
-                    return length;
+                    _length = (Int64)uSize;
+                    return _length;
                 }
                 else
                 {
-                    return length;
+                    return _length;
                 }
             }
         }
