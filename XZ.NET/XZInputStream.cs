@@ -240,6 +240,8 @@ namespace XZ.NET
 
         protected override void Dispose(bool disposing)
         {
+            Native.lzma_end(ref _lzmaStream);
+
             Marshal.FreeHGlobal(_inbuf);
             Marshal.FreeHGlobal(_outbuf);
 

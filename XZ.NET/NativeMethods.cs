@@ -122,6 +122,9 @@ namespace XZ.NET
         internal static extern void lzma_index_end(IntPtr i, IntPtr allocator);
 
         [DllImport("liblzma.dll", CharSet = CharSet.Ansi, CallingConvention = CallingConvention.Cdecl)]
+        internal static extern void lzma_end(ref LzmaStream stream);
+
+        [DllImport("liblzma.dll", CharSet = CharSet.Ansi, CallingConvention = CallingConvention.Cdecl)]
         internal static extern LzmaReturn lzma_easy_encoder(ref LzmaStream stream, int preset, LzmaCheck check);
     }
 }
