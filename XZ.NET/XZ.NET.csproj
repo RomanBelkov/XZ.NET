@@ -44,6 +44,7 @@
     <Compile Include="NativeMethods.cs" />
     <Compile Include="XZInputStream.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="XZOutputStream.cs" />
   </ItemGroup>
   <ItemGroup>
     <Content Include="liblzma.dll">
