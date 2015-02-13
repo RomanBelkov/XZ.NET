@@ -79,6 +79,30 @@ namespace Examples
             binaryWriter.Close();
 
             #endregion
+
+            #region Simple compression
+
+            var inp = new FileStream(@"testC.txt", FileMode.Open, FileAccess.Read, FileShare.Read);
+            var binaryWr =
+                new BinaryWriter(new FileStream(@"tesC.txt.xz", FileMode.OpenOrCreate, FileAccess.Write, FileShare.None));
+
+            using (var strm = new XZOutputStream(inp))
+            {
+                var buf = new byte[2048];
+
+                while (true)
+                {
+                    var count = strm.Read(buf, 0, buf.Length);
+                    binaryWr.Write(buf, 0, count);
+                    if (count == 0) 
+                        break;
+                }
+            }
+
+            inp.Close();
+            binaryWr.Close();
+
+            #endregion
         }
     }
 }

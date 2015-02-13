@@ -74,7 +74,6 @@ namespace XZ.NET
             throw new NotSupportedException("XZ Stream does not support setting length");
         }
 
-
         /// <summary>
         /// Reads bytes from stream
         /// </summary>
@@ -83,15 +82,15 @@ namespace XZ.NET
         {
             var action = LzmaAction.LzmaRun;
 
-            var readbuf = new byte[BufSize];
-            var outManBuf = new byte[BufSize];
+            var readBuf = new byte[BufSize];
+            var outManagedBuf = new byte[BufSize];
 
             while (_mInternalBuffer.Length < count)
             {
                 if (_lzmaStream.avail_in == 0)
                 {
-                    _lzmaStream.avail_in = (uint)_mInnerStream.Read(readbuf, 0, readbuf.Length);
-                    Marshal.Copy(readbuf, 0, _inbuf, (int)_lzmaStream.avail_in);
+                    _lzmaStream.avail_in = (uint)_mInnerStream.Read(readBuf, 0, readBuf.Length);
+                    Marshal.Copy(readBuf, 0, _inbuf, (int)_lzmaStream.avail_in);
                     _lzmaStream.next_in = _inbuf;
 
                     if (_lzmaStream.avail_in == 0)
@@ -103,9 +102,9 @@ namespace XZ.NET
                 if (_lzmaStream.avail_out == 0 || ret == LzmaReturn.LzmaStreamEnd)
                 {
                     var writeSize = BufSize - (int)_lzmaStream.avail_out;
-                    Marshal.Copy(_outbuf, outManBuf, 0, writeSize);
+                    Marshal.Copy(_outbuf, outManagedBuf, 0, writeSize);
 
-                    _mInternalBuffer = _mInternalBuffer.Concat(outManBuf.Take(writeSize)).ToArray();
+                    _mInternalBuffer = _mInternalBuffer.Concat(outManagedBuf.Take(writeSize)).ToArray(); //todo remove LINQ here
 
                     _lzmaStream.next_out = _outbuf;
                     _lzmaStream.avail_out = BufSize;
@@ -115,6 +114,8 @@ namespace XZ.NET
                 {
                     if (ret == LzmaReturn.LzmaStreamEnd)
                         break;
+
+                    Native.lzma_end(ref _lzmaStream);
 
                     switch (ret)
                     {
