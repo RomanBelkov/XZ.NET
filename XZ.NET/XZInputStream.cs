@@ -11,21 +11,23 @@
  */
 
 using System;
+using System.Collections.Generic;
 using System.IO;
-using System.Linq;
 using System.Runtime.InteropServices;
 
 namespace XZ.NET
 {
     public class XZInputStream : Stream
     {
-        private byte[] _mInternalBuffer = new byte[0];
+        private readonly List<byte> _mInternalBuffer = new List<byte>();
         private LzmaStream _lzmaStream;
         private readonly Stream _mInnerStream;
         private readonly IntPtr _inbuf;
         private readonly IntPtr _outbuf;
         private long _length;
 
+        // You can tweak BufSize value to get optimal results
+        // of speed and chunk size
         private const int BufSize = 512;
         private const int LzmaConcatenatedFlag = 0x08;
 
@@ -85,7 +87,7 @@ namespace XZ.NET
             var readBuf = new byte[BufSize];
             var outManagedBuf = new byte[BufSize];
 
-            while (_mInternalBuffer.Length < count)
+            while (_mInternalBuffer.Count < count)
             {
                 if (_lzmaStream.avail_in == 0)
                 {
@@ -104,7 +106,9 @@ namespace XZ.NET
                     var writeSize = BufSize - (int)_lzmaStream.avail_out;
                     Marshal.Copy(_outbuf, outManagedBuf, 0, writeSize);
 
-                    _mInternalBuffer = _mInternalBuffer.Concat(outManagedBuf.Take(writeSize)).ToArray(); //todo remove LINQ here
+                    _mInternalBuffer.AddRange(outManagedBuf);
+                    var tail = outManagedBuf.Length - writeSize;
+                    _mInternalBuffer.RemoveRange(_mInternalBuffer.Count - tail, tail);
 
                     _lzmaStream.next_out = _outbuf;
                     _lzmaStream.avail_out = BufSize;
@@ -140,19 +144,17 @@ namespace XZ.NET
                 }
             }
 
-            if (_mInternalBuffer.Length >= count)
+            if (_mInternalBuffer.Count >= count)
             {
-                Array.Copy(_mInternalBuffer, 0, buffer, offset, count);
-                var tmp = new byte[_mInternalBuffer.Length - count];
-                Array.Copy(_mInternalBuffer, tmp, _mInternalBuffer.Length - count);
-                _mInternalBuffer = tmp;
+                _mInternalBuffer.CopyTo(0, buffer, offset, count);
+                _mInternalBuffer.RemoveRange(0, count);
                 return count;
             }
             else
             {
-                var intBufLength = _mInternalBuffer.Length;
-                Array.Copy(_mInternalBuffer, 0, buffer, offset, intBufLength);
-                _mInternalBuffer = new byte[0];
+                var intBufLength = _mInternalBuffer.Count;
+                _mInternalBuffer.CopyTo(0, buffer, offset, count);
+                _mInternalBuffer.Clear();
                 return intBufLength;
             }
         }
