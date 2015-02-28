@@ -11,7 +11,6 @@
  */
 
 using System;
-using System.Collections.Generic;
 using System.IO;
 using System.Runtime.InteropServices;
 
@@ -19,7 +18,6 @@ namespace XZ.NET
 {
     public class XZOutputStream : Stream
     {
-        private readonly List<byte> _mInternalBuffer = new List<byte>();
         private LzmaStream _lzmaStream;
         private readonly Stream _mInnerStream;
         private readonly IntPtr _inbuf;
@@ -32,13 +30,13 @@ namespace XZ.NET
 
         // You can tweak BufSize value to get optimal results
         // of speed and chunk size
-        private const int BufSize = 512;
+        private const int BufSize = 1 * 1024 * 1024;
 
         public XZOutputStream(Stream s)
         {
             _mInnerStream = s;
 
-	        var ret = Native.lzma_easy_encoder(ref _lzmaStream, Preset, LzmaCheck.LzmaCheckCrc64);
+            var ret = Native.lzma_easy_encoder(ref _lzmaStream, Preset, LzmaCheck.LzmaCheckCrc64);
 
             _inbuf = Marshal.AllocHGlobal(BufSize);
             _outbuf = Marshal.AllocHGlobal(BufSize);
@@ -47,139 +45,147 @@ namespace XZ.NET
             _lzmaStream.next_out = _outbuf;
             _lzmaStream.avail_out = BufSize;
 
-	        if (ret == LzmaReturn.LzmaOK)
-		        return;
+            if (ret == LzmaReturn.LzmaOK)
+                return;
 
-	        switch (ret) {
-	        case  LzmaReturn.LzmaMemError :
-		        throw new Exception("Memory allocation failed");
+            switch (ret)
+            {
+                case LzmaReturn.LzmaMemError:
+                    throw new Exception("Memory allocation failed");
 
-	        case LzmaReturn.LzmaOptionsError :
-		        throw new Exception("Specified preset is not supported");
+                case LzmaReturn.LzmaOptionsError:
+                    throw new Exception("Specified preset is not supported");
 
-	        case LzmaReturn.LzmaUnsupportedCheck :
-		        throw new Exception("Specified integrity check is not supported");
+                case LzmaReturn.LzmaUnsupportedCheck:
+                    throw new Exception("Specified integrity check is not supported");
 
-	        default:
-		        throw new Exception("Unknown error, possibly a bug");
-	        }
+                default:
+                    throw new Exception("Unknown error, possibly a bug");
+            }
         }
 
         public override void Flush()
         {
-            throw new NotImplementedException();
+            throw new NotSupportedException();
         }
 
         public override long Seek(long offset, SeekOrigin origin)
         {
-            throw new NotImplementedException();
+            throw new NotSupportedException();
         }
 
         public override void SetLength(long value)
         {
-            throw new NotImplementedException();
+            throw new NotSupportedException();
         }
 
         public override int Read(byte[] buffer, int offset, int count)
         {
-            var action = LzmaAction.LzmaRun;
+            throw new NotSupportedException();
+        }
 
-            var writeBuf = new byte[BufSize];
+        public override void Write(byte[] buffer, int offset, int count)
+        {
             var outManagedBuf = new byte[BufSize];
 
-            while (_mInternalBuffer.Count < count)
+            if (_lzmaStream.avail_in == 0)
             {
-                if (_lzmaStream.avail_in == 0)
-                {
-                    _lzmaStream.avail_in = (uint)_mInnerStream.Read(writeBuf, 0, writeBuf.Length);
-                    Marshal.Copy(writeBuf, 0, _inbuf, (int)_lzmaStream.avail_in);
-                    _lzmaStream.next_in = _inbuf;
+                _lzmaStream.avail_in = (uint)count;
+                Marshal.Copy(buffer, 0, _inbuf, (int)_lzmaStream.avail_in);
+                _lzmaStream.next_in = _inbuf;
+            }
 
-                    if (_lzmaStream.avail_in == 0)
-                        action = LzmaAction.LzmaFinish;
-                }
+            var ret = LzmaReturn.LzmaOK;
 
-                var ret = Native.lzma_code(ref _lzmaStream, action);
+            while (_lzmaStream.avail_in > 0)
+            {
+                ret = Native.lzma_code(ref _lzmaStream, LzmaAction.LzmaRun);
 
                 if (_lzmaStream.avail_out == 0 || ret == LzmaReturn.LzmaStreamEnd)
                 {
                     var writeSize = BufSize - (int)_lzmaStream.avail_out;
                     Marshal.Copy(_outbuf, outManagedBuf, 0, writeSize);
 
-                    _mInternalBuffer.AddRange(outManagedBuf);
-                    var tail = outManagedBuf.Length - writeSize;
-                    _mInternalBuffer.RemoveRange(_mInternalBuffer.Count - tail, tail);
+                    _mInnerStream.Write(outManagedBuf, 0, writeSize);
 
                     _lzmaStream.next_out = _outbuf;
                     _lzmaStream.avail_out = BufSize;
                 }
+            }
 
-                if (ret != LzmaReturn.LzmaOK)
+            if (ret != LzmaReturn.LzmaOK)
+            {
+                if (ret == LzmaReturn.LzmaStreamEnd)
+                    return;
+
+                Native.lzma_end(ref _lzmaStream);
+
+                switch (ret)
                 {
-                    if (ret == LzmaReturn.LzmaStreamEnd)
-                        break;
+                    case LzmaReturn.LzmaMemError:
+                        throw new Exception("Memory allocation failed");
 
-                    Native.lzma_end(ref _lzmaStream);
+                    case LzmaReturn.LzmaDataError:
+                        throw new Exception("File size limits exceeded");
 
-
-                    switch (ret)
-                    {
-                        case LzmaReturn.LzmaMemError:
-                            throw new Exception("Memory allocation failed");
-
-                        case LzmaReturn.LzmaDataError:
-                            throw new Exception("File size limits exceeded");
-
-                        default:
-                            throw new Exception("Unknown error, possibly a bug");
-                    }
+                    default:
+                        throw new Exception("Unknown error, possibly a bug");
                 }
-            }
-
-            if (_mInternalBuffer.Count >= count)
-            {
-                _mInternalBuffer.CopyTo(0, buffer, offset, count);
-                _mInternalBuffer.RemoveRange(0, count);
-                return count;
-            }
-            else
-            {
-                var intBufLength = _mInternalBuffer.Count;
-                _mInternalBuffer.CopyTo(0, buffer, offset, count);
-                _mInternalBuffer.Clear();
-                return intBufLength;
             }
         }
 
-        public override void Write(byte[] buffer, int offset, int count)
-        {
-            throw  new NotImplementedException();
-	    }
-
         public override bool CanRead
         {
-            get { throw new NotImplementedException(); }
+            get { return false; }
         }
 
         public override bool CanSeek
         {
-            get { throw new NotImplementedException(); }
+            get { return false; }
         }
 
         public override bool CanWrite
         {
-            get { throw new NotImplementedException(); }
+            get { return true; }
         }
 
         public override long Length
         {
-            get { throw new NotImplementedException(); }
+            get { throw new NotSupportedException(); }
         }
 
         public override long Position
         {
-            get { throw new NotImplementedException(); }
-            set { throw new NotImplementedException(); }
+            get { throw new NotSupportedException(); }
+            set { throw new NotSupportedException(); }
+        }
+
+        public override void Close()
+        {
+            Dispose(true);
+        }
+
+        protected override void Dispose(bool disposing)
+        {
+            _lzmaStream.avail_in = 0; //check if needed
+
+            var ret = Native.lzma_code(ref _lzmaStream, LzmaAction.LzmaFinish);
+            var outManagedBuf = new byte[BufSize];
+
+            if (_lzmaStream.avail_out == 0 || ret == LzmaReturn.LzmaStreamEnd)
+            {
+                var writeSize = BufSize - (int)_lzmaStream.avail_out;
+                Marshal.Copy(_outbuf, outManagedBuf, 0, writeSize);
+
+                _mInnerStream.Write(outManagedBuf, 0, writeSize);
+            }
+
+            Native.lzma_end(ref _lzmaStream);
+
+            Marshal.FreeHGlobal(_inbuf);
+            Marshal.FreeHGlobal(_outbuf);
+
+            base.Dispose(disposing);
         }
     }
 }
