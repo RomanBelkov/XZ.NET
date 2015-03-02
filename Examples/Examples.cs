@@ -82,37 +82,37 @@ namespace Examples
 
             #region Simple compression
 
-            //var start = DateTime.Now;
+            var start = DateTime.Now;
 
-            //var writer = 
-            //    new BinaryReader(new FileStream(@"image.img", FileMode.Open, FileAccess.Read, FileShare.Read));
-            //var output = new FileStream(@"image.img.xz", FileMode.OpenOrCreate, FileAccess.Write, FileShare.None);
+            var writer =
+                new BinaryReader(new FileStream(@"image.img", FileMode.Open, FileAccess.Read, FileShare.Read));
+            var output = new FileStream(@"image.img.xz", FileMode.OpenOrCreate, FileAccess.Write, FileShare.None);
 
-            //var f = new FileInfo(@"image.img");
-            //var size = f.Length;
+            var f = new FileInfo(@"image.img");
+            var size = f.Length;
 
-            //using (var strm = new XZOutputStream(output))
-            //{
-            //    var buf = new byte[1 * 1024 * 1024];
-            //    Int64 bytesRead = 0;
+            using (var strm = new XZOutputStream(output))
+            {
+                var buf = new byte[1 * 1024 * 1024];
+                Int64 bytesRead = 0;
 
-            //    while (bytesRead < size)
-            //    {
-            //        var count = writer.Read(buf, 0, buf.Length);
-            //        strm.Write(buf, 0, count);
-            //        bytesRead += count;
-            //    }
-            //}
+                while (bytesRead < size)
+                {
+                    var count = writer.Read(buf, 0, buf.Length);
+                    strm.Write(buf, 0, count);
+                    bytesRead += count;
+                }
+            }
 
-            //writer.Close();
-            //output.Close();
+            writer.Close();
+            output.Close();
 
-            //var end = DateTime.Now.Subtract(start).TotalSeconds;
-            //var spd = size/end;
+            var end = DateTime.Now.Subtract(start).TotalSeconds;
+            var spd = size / end;
 
-            //Console.WriteLine("time " + end);
-            //Console.WriteLine("spd " + spd);
-            //Console.ReadKey();
+            Console.WriteLine("time " + end);
+            Console.WriteLine("spd " + spd);
+            Console.ReadKey();
 
             #endregion
         }

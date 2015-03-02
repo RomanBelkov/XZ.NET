@@ -23,6 +23,8 @@ namespace XZ.NET
         private readonly IntPtr _inbuf;
         private readonly IntPtr _outbuf;
 
+        private const int MaxThreads = 8;
+
         // This is a default compression preset & since
         // the output does not benefit a lot from changing 
         // this value it is hard coded
@@ -36,7 +38,22 @@ namespace XZ.NET
         {
             _mInnerStream = s;
 
-            var ret = Native.lzma_easy_encoder(ref _lzmaStream, Preset, LzmaCheck.LzmaCheckCrc64);
+            var mt = new LzmaMT()
+            {
+                flags = 0,
+                block_size = 0,
+                timeout = 0,
+                preset = Preset,
+                filters = IntPtr.Zero,
+                check = LzmaCheck.LzmaCheckCrc64,
+                threads = (uint)Environment.ProcessorCount
+            };
+
+            if (mt.threads > MaxThreads)
+                mt.threads = MaxThreads;
+
+            var ret = Native.lzma_stream_encoder_mt(ref _lzmaStream, ref mt);
+            //var ret = Native.lzma_easy_encoder(ref _lzmaStream, Preset, LzmaCheck.LzmaCheckCrc64);
 
             _inbuf = Marshal.AllocHGlobal(BufSize);
             _outbuf = Marshal.AllocHGlobal(BufSize);
