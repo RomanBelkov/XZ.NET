@@ -73,13 +73,6 @@ namespace XZ.NET
         private readonly UInt32 reserved_int2;
     }
 
-    //[StructLayout(LayoutKind.Sequential)]
-    //internal struct LzmaFilter
-    //{
-    //    private readonly UInt64 id;
-    //    private readonly IntPtr options;
-    //}
-
     [StructLayout(LayoutKind.Sequential)]
     internal struct LzmaMT
     {
@@ -159,9 +152,6 @@ namespace XZ.NET
 
         [DllImport("liblzma.dll", CharSet = CharSet.Ansi, CallingConvention = CallingConvention.Cdecl)]
         internal static extern void lzma_end(ref LzmaStream stream);
-
-        [DllImport("liblzma.dll", CharSet = CharSet.Ansi, CallingConvention = CallingConvention.Cdecl)]
-        internal static extern LzmaReturn lzma_easy_encoder(ref LzmaStream stream, int preset, LzmaCheck check);
 
         [DllImport("liblzma.dll", CharSet = CharSet.Ansi, CallingConvention = CallingConvention.Cdecl)]
         internal static extern LzmaReturn lzma_stream_encoder_mt(ref LzmaStream stream, ref LzmaMT mt);

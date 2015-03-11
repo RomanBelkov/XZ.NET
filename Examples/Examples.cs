@@ -11,6 +11,7 @@
  */
 
 using System;
+using System.Diagnostics;
 using System.IO;
 using System.Text;
 using XZ.NET;
@@ -80,39 +81,42 @@ namespace Examples
 
             #endregion
 
-            #region Simple compression
+            #region Simple compression (with timing)
 
-            var start = DateTime.Now;
+            //var timer = new Stopwatch();
+            //timer.Start();
 
-            var writer =
-                new BinaryReader(new FileStream(@"image.img", FileMode.Open, FileAccess.Read, FileShare.Read));
-            var output = new FileStream(@"image.img.xz", FileMode.OpenOrCreate, FileAccess.Write, FileShare.None);
+            //var writer =
+            //    new BinaryReader(new FileStream(@"test.img", FileMode.Open, FileAccess.Read, FileShare.Read));
+            //var output = new FileStream(@"test.img.xz", FileMode.OpenOrCreate, FileAccess.Write, FileShare.None);
 
-            var f = new FileInfo(@"image.img");
-            var size = f.Length;
+            //var f = new FileInfo(@"test.img");
+            //var size = f.Length;
 
-            using (var strm = new XZOutputStream(output))
-            {
-                var buf = new byte[1 * 1024 * 1024];
-                Int64 bytesRead = 0;
+            //using (var strm = new XZOutputStream(output))
+            //{
+            //    var buf = new byte[1 * 1024 * 1024];
+            //    Int64 bytesRead = 0;
 
-                while (bytesRead < size)
-                {
-                    var count = writer.Read(buf, 0, buf.Length);
-                    strm.Write(buf, 0, count);
-                    bytesRead += count;
-                }
-            }
+            //    while (bytesRead < size)
+            //    {
+            //        var count = writer.Read(buf, 0, buf.Length);
+            //        strm.Write(buf, 0, count);
+            //        bytesRead += count;
+            //    }
+            //}
 
-            writer.Close();
-            output.Close();
+            //writer.Close();
+            //output.Close();
 
-            var end = DateTime.Now.Subtract(start).TotalSeconds;
-            var spd = size / end;
+            //timer.Stop();
 
-            Console.WriteLine("time " + end);
-            Console.WriteLine("spd " + spd);
-            Console.ReadKey();
+            //var end = timer.ElapsedMilliseconds;
+            //var spd = size / end;
+
+            //Console.WriteLine("Time: " + end);
+            //Console.WriteLine("Speed: " + spd);
+            //Console.ReadKey();
 
             #endregion
         }
