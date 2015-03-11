@@ -153,7 +153,7 @@ namespace XZ.NET
             else
             {
                 var intBufLength = _mInternalBuffer.Count;
-                _mInternalBuffer.CopyTo(0, buffer, offset, count);
+                _mInternalBuffer.CopyTo(0, buffer, offset, intBufLength);
                 _mInternalBuffer.Clear();
                 return intBufLength;
             }
