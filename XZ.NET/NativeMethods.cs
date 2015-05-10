@@ -129,6 +129,35 @@ namespace XZ.NET
         private readonly UInt32 reserved_enum2;
     }
 
+#if WIN64
+    public static class Native
+    {
+        [DllImport("liblzma64.dll", CharSet = CharSet.Ansi, CallingConvention = CallingConvention.Cdecl)]
+        internal static extern LzmaReturn lzma_stream_decoder(ref LzmaStream stream, UInt64 memLimit, UInt32 flags);
+
+        [DllImport("liblzma64.dll", CharSet = CharSet.Ansi, CallingConvention = CallingConvention.Cdecl)]
+        internal static extern LzmaReturn lzma_code(ref LzmaStream stream, LzmaAction action);
+
+        [DllImport("liblzma64.dll", CharSet = CharSet.Ansi, CallingConvention = CallingConvention.Cdecl)]
+        internal static extern LzmaReturn lzma_stream_footer_decode(ref LzmaStreamFlags options, byte[] inp);
+
+        [DllImport("liblzma64.dll", CharSet = CharSet.Ansi, CallingConvention = CallingConvention.Cdecl)]
+        internal static extern UInt64 lzma_index_uncompressed_size(IntPtr i);
+
+        [DllImport("liblzma64.dll", CharSet = CharSet.Ansi, CallingConvention = CallingConvention.Cdecl)]
+        internal static extern UInt32 lzma_index_buffer_decode(ref IntPtr i, ref UInt64 memLimit, IntPtr allocator, byte[] indexBuffer,
+            ref UInt32 inPosition, UInt64 inSize);
+
+        [DllImport("liblzma64.dll", CharSet = CharSet.Ansi, CallingConvention = CallingConvention.Cdecl)]
+        internal static extern void lzma_index_end(IntPtr i, IntPtr allocator);
+
+        [DllImport("liblzma64.dll", CharSet = CharSet.Ansi, CallingConvention = CallingConvention.Cdecl)]
+        internal static extern void lzma_end(ref LzmaStream stream);
+
+        [DllImport("liblzma64.dll", CharSet = CharSet.Ansi, CallingConvention = CallingConvention.Cdecl)]
+        internal static extern LzmaReturn lzma_stream_encoder_mt(ref LzmaStream stream, ref LzmaMT mt);
+    }
+#else
     public static class Native
     {
         [DllImport("liblzma.dll", CharSet = CharSet.Ansi, CallingConvention = CallingConvention.Cdecl)]
@@ -155,6 +184,6 @@ namespace XZ.NET
 
         [DllImport("liblzma.dll", CharSet = CharSet.Ansi, CallingConvention = CallingConvention.Cdecl)]
         internal static extern LzmaReturn lzma_stream_encoder_mt(ref LzmaStream stream, ref LzmaMT mt);
-
     }
+#endif
 }
