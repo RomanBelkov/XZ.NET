@@ -128,8 +128,61 @@ namespace XZ.NET
         private readonly UInt32 reserved_enum1;
         private readonly UInt32 reserved_enum2;
     }
-
     public static class Native
+    {
+        internal delegate LzmaReturn lzma_stream_decoder_delegate(ref LzmaStream stream, UInt64 memLimit, UInt32 flags);
+        internal static readonly lzma_stream_decoder_delegate lzma_stream_decoder = IntPtr.Size > 4 ? (lzma_stream_decoder_delegate)NativeX64.lzma_stream_decoder : NativeX86.lzma_stream_decoder;
+
+        internal delegate LzmaReturn lzma_code_delegate(ref LzmaStream stream, LzmaAction action);
+        internal static readonly lzma_code_delegate lzma_code = IntPtr.Size > 4 ? (lzma_code_delegate)NativeX64.lzma_code : NativeX86.lzma_code;
+
+        internal delegate LzmaReturn lzma_stream_footer_decode_delegate(ref LzmaStreamFlags options, byte[] inp);
+        internal static readonly lzma_stream_footer_decode_delegate lzma_stream_footer_decode = IntPtr.Size > 4 ? (lzma_stream_footer_decode_delegate)NativeX64.lzma_stream_footer_decode : NativeX86.lzma_stream_footer_decode;
+
+        internal delegate UInt64 lzma_index_uncompressed_size_delegate(IntPtr i);
+        internal static readonly lzma_index_uncompressed_size_delegate lzma_index_uncompressed_size = IntPtr.Size > 4 ? (lzma_index_uncompressed_size_delegate)NativeX64.lzma_index_uncompressed_size : NativeX86.lzma_index_uncompressed_size;
+
+        internal delegate UInt32 lzma_index_buffer_decode_delegate(ref IntPtr i, ref UInt64 memLimit, IntPtr allocator, byte[] indexBuffer, ref UInt32 inPosition, UInt64 inSize);
+        internal static readonly lzma_index_buffer_decode_delegate lzma_index_buffer_decode = IntPtr.Size > 4 ? (lzma_index_buffer_decode_delegate)NativeX64.lzma_index_buffer_decode : NativeX86.lzma_index_buffer_decode;
+
+        internal delegate void lzma_index_end_delegate(IntPtr i, IntPtr allocator);
+        internal static readonly lzma_index_end_delegate lzma_index_end = IntPtr.Size > 4 ? (lzma_index_end_delegate)NativeX64.lzma_index_end : NativeX86.lzma_index_end;
+
+        internal delegate void lzma_end_delegate(ref LzmaStream stream);
+        internal static readonly lzma_end_delegate lzma_end = IntPtr.Size > 4 ? (lzma_end_delegate)NativeX64.lzma_end : NativeX86.lzma_end;
+
+        internal delegate LzmaReturn lzma_stream_encoder_mt_delegate(ref LzmaStream stream, ref LzmaMT mt);
+        internal static readonly lzma_stream_encoder_mt_delegate lzma_stream_encoder_mt = IntPtr.Size > 4 ? (lzma_stream_encoder_mt_delegate)NativeX64.lzma_stream_encoder_mt : NativeX86.lzma_stream_encoder_mt;
+    }
+
+    public static class NativeX64
+    {
+        [DllImport("liblzma64.dll", CharSet = CharSet.Ansi, CallingConvention = CallingConvention.Cdecl)]
+        internal static extern LzmaReturn lzma_stream_decoder(ref LzmaStream stream, UInt64 memLimit, UInt32 flags);
+
+        [DllImport("liblzma64.dll", CharSet = CharSet.Ansi, CallingConvention = CallingConvention.Cdecl)]
+        internal static extern LzmaReturn lzma_code(ref LzmaStream stream, LzmaAction action);
+
+        [DllImport("liblzma64.dll", CharSet = CharSet.Ansi, CallingConvention = CallingConvention.Cdecl)]
+        internal static extern LzmaReturn lzma_stream_footer_decode(ref LzmaStreamFlags options, byte[] inp);
+
+        [DllImport("liblzma64.dll", CharSet = CharSet.Ansi, CallingConvention = CallingConvention.Cdecl)]
+        internal static extern UInt64 lzma_index_uncompressed_size(IntPtr i);
+
+        [DllImport("liblzma64.dll", CharSet = CharSet.Ansi, CallingConvention = CallingConvention.Cdecl)]
+        internal static extern UInt32 lzma_index_buffer_decode(ref IntPtr i, ref UInt64 memLimit, IntPtr allocator, byte[] indexBuffer,
+            ref UInt32 inPosition, UInt64 inSize);
+
+        [DllImport("liblzma64.dll", CharSet = CharSet.Ansi, CallingConvention = CallingConvention.Cdecl)]
+        internal static extern void lzma_index_end(IntPtr i, IntPtr allocator);
+
+        [DllImport("liblzma64.dll", CharSet = CharSet.Ansi, CallingConvention = CallingConvention.Cdecl)]
+        internal static extern void lzma_end(ref LzmaStream stream);
+
+        [DllImport("liblzma64.dll", CharSet = CharSet.Ansi, CallingConvention = CallingConvention.Cdecl)]
+        internal static extern LzmaReturn lzma_stream_encoder_mt(ref LzmaStream stream, ref LzmaMT mt);
+    }
+    public static class NativeX86
     {
         [DllImport("liblzma.dll", CharSet = CharSet.Ansi, CallingConvention = CallingConvention.Cdecl)]
         internal static extern LzmaReturn lzma_stream_decoder(ref LzmaStream stream, UInt64 memLimit, UInt32 flags);
@@ -155,6 +208,5 @@ namespace XZ.NET
 
         [DllImport("liblzma.dll", CharSet = CharSet.Ansi, CallingConvention = CallingConvention.Cdecl)]
         internal static extern LzmaReturn lzma_stream_encoder_mt(ref LzmaStream stream, ref LzmaMT mt);
-
     }
 }
