@@ -3,7 +3,7 @@
 **XZ.NET is a .NET wrapper for liblzma.dll**
 
 ## License ##
-Licensed under GNU General Public License 3.0 or later. Some rights reserved. See LICENSE, AUTHORS.
+Licensed under MIT license. See LICENSE, AUTHORS.
 
 This project uses a public domain compression library liblzma from XZ Utils and build tools for Windows (MinGW-w64), which were used by creators of XZ Utils. See LICENSE-Notices for information.
 
@@ -13,9 +13,17 @@ The intentions of this library is to provide basic operations with `.xz` file fo
 
 *Please note that library is in the early stages of development and many features are missing. Also, bugs may be present. The library was tested with `i686-sse2` version of liblzma 5.2.1 (this version is included in project under name liblzma.dll).*
 
+**You can find some basic examples in 'Examples' folder of project.**
+
 ## ChangeLog ##
 
-**You can find some basic examples in 'Examples' folder of project.**
+16/06/2015 - 1.1.0
+
+- Switched the license to MIT
+
+11/05/2015
+
+- Added x86-64 liblzma support and conditional compilation
 
 11/03/2015 
 What's new:
@@ -25,6 +33,7 @@ What's new:
 - now using 5.2.1 version of liblzma
 
 18/01/2015 - 1.0
+
 Initial commit. Library can be used for: 
 
 - getting uncompressed stream from `.xz` archive 

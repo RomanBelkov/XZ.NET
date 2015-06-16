@@ -1,1 +1,2 @@
-Roman Belkov, Kirill Melentyev - first and current version of all files
+Roman Belkov, Kirill Melentyev - first version of all files
+Carter Li                      - added conditional compilation (x86/x64)
