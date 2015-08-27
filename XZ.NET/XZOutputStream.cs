@@ -117,18 +117,23 @@ namespace XZ.NET
         {
             var outManagedBuf = new byte[BufSize];
 
+            var action = LzmaAction.LzmaRun;
+
             if (_lzmaStream.avail_in == 0)
             {
                 _lzmaStream.avail_in = (uint)count;
                 Marshal.Copy(buffer, 0, _inbuf, (int)_lzmaStream.avail_in);
                 _lzmaStream.next_in = _inbuf;
+
+                if (count < BufSize)
+                    action = LzmaAction.LzmaFinish;
             }
 
             var ret = LzmaReturn.LzmaOK;
 
             while (_lzmaStream.avail_in > 0)
             {
-                ret = Native.lzma_code(ref _lzmaStream, LzmaAction.LzmaRun);
+                ret = Native.lzma_code(ref _lzmaStream, action);
 
                 if (_lzmaStream.avail_out == 0 || ret == LzmaReturn.LzmaStreamEnd)
                 {
