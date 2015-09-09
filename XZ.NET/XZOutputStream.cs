@@ -135,6 +135,25 @@ namespace XZ.NET
             {
                 ret = Native.lzma_code(ref _lzmaStream, action);
 
+                if (action == LzmaAction.LzmaFinish)
+                {
+                    while (ret != LzmaReturn.LzmaStreamEnd)
+                    {
+                        ret = Native.lzma_code(ref _lzmaStream, action);
+
+                        if (_lzmaStream.avail_out == 0 || ret == LzmaReturn.LzmaStreamEnd)
+                        {
+                            var writeSize = BufSize - (int)_lzmaStream.avail_out;
+                            Marshal.Copy(_outbuf, outManagedBuf, 0, writeSize);
+
+                            _mInnerStream.Write(outManagedBuf, 0, writeSize);
+
+                            _lzmaStream.next_out = _outbuf;
+                            _lzmaStream.avail_out = BufSize;
+                        }
+                    }
+                }
+
                 if (_lzmaStream.avail_out == 0 || ret == LzmaReturn.LzmaStreamEnd)
                 {
                     var writeSize = BufSize - (int)_lzmaStream.avail_out;
@@ -201,7 +220,7 @@ namespace XZ.NET
 
         protected override void Dispose(bool disposing)
         {
-            _lzmaStream.avail_in = 0; //check if needed
+/*            _lzmaStream.avail_in = 0; //check if needed
 
             var ret = Native.lzma_code(ref _lzmaStream, LzmaAction.LzmaFinish);
             var outManagedBuf = new byte[BufSize];
@@ -212,7 +231,7 @@ namespace XZ.NET
                 Marshal.Copy(_outbuf, outManagedBuf, 0, writeSize);
 
                 _mInnerStream.Write(outManagedBuf, 0, writeSize);
-            }
+            }*/
 
             Native.lzma_end(ref _lzmaStream);
 
