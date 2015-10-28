@@ -220,7 +220,7 @@ namespace XZ.NET
 
         protected override void Dispose(bool disposing)
         {
-/*            _lzmaStream.avail_in = 0; //check if needed
+            _lzmaStream.avail_in = 0; //check if needed
 
             var ret = Native.lzma_code(ref _lzmaStream, LzmaAction.LzmaFinish);
             var outManagedBuf = new byte[BufSize];
@@ -231,7 +231,7 @@ namespace XZ.NET
                 Marshal.Copy(_outbuf, outManagedBuf, 0, writeSize);
 
                 _mInnerStream.Write(outManagedBuf, 0, writeSize);
-            }*/
+            }
 
             Native.lzma_end(ref _lzmaStream);
 
