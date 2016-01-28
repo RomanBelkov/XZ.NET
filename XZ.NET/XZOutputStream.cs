@@ -23,6 +23,7 @@
 */
 
 using System;
+using System.Diagnostics;
 using System.IO;
 using System.Runtime.InteropServices;
 
@@ -35,8 +36,6 @@ namespace XZ.NET
         private readonly IntPtr _inbuf;
         private readonly IntPtr _outbuf;
 
-        private const int MaxThreads = 8;
-
         // This is a default compression preset & since
         // the output does not benefit a lot from changing 
         // this value it is hard coded
@@ -46,8 +45,19 @@ namespace XZ.NET
         // of speed and chunk size
         private const int BufSize = 1 * 1024 * 1024;
 
-        public XZOutputStream(Stream s)
+        public XZOutputStream(Stream s) : this(s, 2) // 2 threads by default
         {
+        }
+
+        public XZOutputStream(Stream s, int threads)
+        {
+            if (threads <= 0) throw new ArgumentOutOfRangeException("threads");
+            if (threads > Environment.ProcessorCount)
+            {
+                Trace.TraceWarning("{0} threads required, but only {1} processors available", threads, Environment.ProcessorCount);
+                threads = Environment.ProcessorCount;
+            }
+
             _mInnerStream = s;
 
             var mt = new LzmaMT()
@@ -58,11 +68,8 @@ namespace XZ.NET
                 preset = Preset,
                 filters = IntPtr.Zero,
                 check = LzmaCheck.LzmaCheckCrc64,
-                threads = (uint)Environment.ProcessorCount
+                threads = (uint)threads
             };
-
-            if (mt.threads > MaxThreads)
-                mt.threads = MaxThreads;
 
             var ret = Native.lzma_stream_encoder_mt(ref _lzmaStream, ref mt);
             //var ret = Native.lzma_easy_encoder(ref _lzmaStream, Preset, LzmaCheck.LzmaCheckCrc64);
