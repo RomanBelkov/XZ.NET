@@ -122,20 +122,17 @@ namespace XZ.NET
 
         public override void Write(byte[] buffer, int offset, int count)
         {
-            var outManagedBuf = new byte[BufSize];
-
             var action = LzmaAction.LzmaRun;
 
-            if (_lzmaStream.avail_in == UIntPtr.Zero)
-            {
-                _lzmaStream.avail_in = (UIntPtr)checked((uint)count);
-                Marshal.Copy(buffer, offset, _inbuf, (int)_lzmaStream.avail_in);
-                _lzmaStream.next_in = _inbuf;
+            if (_lzmaStream.avail_in != UIntPtr.Zero) throw new InvalidOperationException();
+            _lzmaStream.avail_in = (UIntPtr)checked((uint)count);
+            Marshal.Copy(buffer, offset, _inbuf, (int)_lzmaStream.avail_in);
+            _lzmaStream.next_in = _inbuf;
 
-                if (count < BufSize)
-                    action = LzmaAction.LzmaFinish;
-            }
+            if (count < BufSize)
+                action = LzmaAction.LzmaFinish;
 
+            var outManagedBuf = new byte[BufSize];
             while (_lzmaStream.avail_in != UIntPtr.Zero)
             {
                 var ret = Native.lzma_code(ref _lzmaStream, action);
@@ -176,7 +173,7 @@ namespace XZ.NET
 
         void ThrowError(LzmaReturn ret)
         {
-            //Native.lzma_end(ref _lzmaStream);
+            Native.lzma_end(ref _lzmaStream);
             switch(ret)
             {
                 case LzmaReturn.LzmaMemError: throw new InsufficientMemoryException("Memory allocation failed");
