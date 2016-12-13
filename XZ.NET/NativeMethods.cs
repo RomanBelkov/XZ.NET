@@ -140,7 +140,7 @@ namespace XZ.NET
         private readonly UInt32 reserved_enum1;
         private readonly UInt32 reserved_enum2;
     }
-    public static class Native
+    static class Native
     {
         internal delegate LzmaReturn lzma_stream_decoder_delegate(ref LzmaStream stream, UInt64 memLimit, UInt32 flags);
         internal static readonly lzma_stream_decoder_delegate lzma_stream_decoder = IntPtr.Size > 4 ? (lzma_stream_decoder_delegate)NativeX64.lzma_stream_decoder : NativeX86.lzma_stream_decoder;
@@ -167,7 +167,8 @@ namespace XZ.NET
         internal static readonly lzma_stream_encoder_mt_delegate lzma_stream_encoder_mt = IntPtr.Size > 4 ? (lzma_stream_encoder_mt_delegate)NativeX64.lzma_stream_encoder_mt : NativeX86.lzma_stream_encoder_mt;
     }
 
-    public static class NativeX64
+    [System.Security.SuppressUnmanagedCodeSecurity]
+    static class NativeX64
     {
         [DllImport("liblzma64.dll", CharSet = CharSet.Ansi, CallingConvention = CallingConvention.Cdecl)]
         internal static extern LzmaReturn lzma_stream_decoder(ref LzmaStream stream, UInt64 memLimit, UInt32 flags);
@@ -194,7 +195,9 @@ namespace XZ.NET
         [DllImport("liblzma64.dll", CharSet = CharSet.Ansi, CallingConvention = CallingConvention.Cdecl)]
         internal static extern LzmaReturn lzma_stream_encoder_mt(ref LzmaStream stream, ref LzmaMT mt);
     }
-    public static class NativeX86
+
+    [System.Security.SuppressUnmanagedCodeSecurity]
+    static class NativeX86
     {
         [DllImport("liblzma.dll", CharSet = CharSet.Ansi, CallingConvention = CallingConvention.Cdecl)]
         internal static extern LzmaReturn lzma_stream_decoder(ref LzmaStream stream, UInt64 memLimit, UInt32 flags);

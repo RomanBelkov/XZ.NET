@@ -29,27 +29,27 @@ using System.Runtime.InteropServices;
 
 namespace XZ.NET
 {
-    public class XZOutputStream : Stream
+    public sealed class XZOutputStream : Stream
     {
         private LzmaStream _lzmaStream;
         private readonly Stream _mInnerStream;
         private readonly IntPtr _inbuf;
         private readonly IntPtr _outbuf;
 
-        // This is a default compression preset & since
-        // the output does not benefit a lot from changing 
-        // this value it is hard coded
+        // This is a default compression preset
         private const int Preset = 6;
 
         // You can tweak BufSize value to get optimal results
         // of speed and chunk size
         private const int BufSize = 1 * 1024 * 1024;
 
-        public XZOutputStream(Stream s) : this(s, 2) // 2 threads by default
+        public XZOutputStream(Stream s) : this(s, 1) // single thread by default
         {
         }
 
-        public XZOutputStream(Stream s, int threads)
+        public XZOutputStream(Stream s, int threads) : this(s, threads, Preset) { }
+
+        public XZOutputStream(Stream s, int threads, byte compression)
         {
             if (threads <= 0) throw new ArgumentOutOfRangeException("threads");
             if (threads > Environment.ProcessorCount)
@@ -57,6 +57,7 @@ namespace XZ.NET
                 Trace.TraceWarning("{0} threads required, but only {1} processors available", threads, Environment.ProcessorCount);
                 threads = Environment.ProcessorCount;
             }
+            if(compression > 9) throw new ArgumentOutOfRangeException(nameof(compression));
 
             _mInnerStream = s;
 
@@ -65,24 +66,25 @@ namespace XZ.NET
                 flags = 0,
                 block_size = 0,
                 timeout = 0,
-                preset = Preset,
+                preset = compression,
                 filters = IntPtr.Zero,
                 check = LzmaCheck.LzmaCheckCrc64,
                 threads = (uint)threads
             };
 
             var ret = Native.lzma_stream_encoder_mt(ref _lzmaStream, ref mt);
-            //var ret = Native.lzma_easy_encoder(ref _lzmaStream, Preset, LzmaCheck.LzmaCheckCrc64);
+            //var ret = Native.lzma_easy_encoder(ref _lzmaStream, compression, LzmaCheck.LzmaCheckCrc64);
 
-            _inbuf = Marshal.AllocHGlobal(BufSize);
-            _outbuf = Marshal.AllocHGlobal(BufSize);
+            if(ret == LzmaReturn.LzmaOK)
+            {
+                _inbuf = Marshal.AllocHGlobal(BufSize);
+                _outbuf = Marshal.AllocHGlobal(BufSize);
 
-            _lzmaStream.avail_in = 0;
-            _lzmaStream.next_out = _outbuf;
-            _lzmaStream.avail_out = BufSize;
-
-            if (ret == LzmaReturn.LzmaOK)
+                _lzmaStream.avail_in = 0;
+                _lzmaStream.next_out = _outbuf;
+                _lzmaStream.avail_out = BufSize;
                 return;
+            }
 
             switch (ret)
             {
