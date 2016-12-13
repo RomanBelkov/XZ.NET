@@ -155,7 +155,7 @@ namespace XZ.NET
                             throw new InvalidDataException("Compressed file is truncated or otherwise corrupt");
 
                         default:
-                            throw new Exception("Uknown error.Possibly a bug");
+                            throw new Exception("Unknown error, possibly a bug: " + ret);
                     }
                 }
             }

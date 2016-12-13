@@ -33,47 +33,46 @@ namespace XZ.NET
     {
         private LzmaStream _lzmaStream;
         private readonly Stream _mInnerStream;
+        private readonly bool leaveOpen;
         private readonly IntPtr _inbuf;
         private readonly IntPtr _outbuf;
 
-        // This is a default compression preset
-        private const int Preset = 6;
+        /// <summary>
+        /// Default compression preset.
+        /// </summary>
+        public const uint DefaultPreset = 6;
+        public const uint PresetExtremeFlag = (uint)1 << 31;
 
         // You can tweak BufSize value to get optimal results
         // of speed and chunk size
         private const int BufSize = 1 * 1024 * 1024;
 
-        public XZOutputStream(Stream s) : this(s, 1) // single thread by default
+        public XZOutputStream(Stream s) : this(s, 1) { }
+        public XZOutputStream(Stream s, int threads) : this(s, threads, DefaultPreset) { }
+        public XZOutputStream(Stream s, int threads, uint preset) : this(s, threads, preset, false) { }
+        public XZOutputStream(Stream s, int threads, uint preset, bool leaveOpen)
         {
-        }
-
-        public XZOutputStream(Stream s, int threads) : this(s, threads, Preset) { }
-
-        public XZOutputStream(Stream s, int threads, byte compression)
-        {
-            if (threads <= 0) throw new ArgumentOutOfRangeException("threads");
-            if (threads > Environment.ProcessorCount)
-            {
-                Trace.TraceWarning("{0} threads required, but only {1} processors available", threads, Environment.ProcessorCount);
-                threads = Environment.ProcessorCount;
-            }
-            if(compression > 9) throw new ArgumentOutOfRangeException(nameof(compression));
-
             _mInnerStream = s;
+            this.leaveOpen = leaveOpen;
 
-            var mt = new LzmaMT()
+            LzmaReturn ret;
+            if(threads == 1) ret = Native.lzma_easy_encoder(ref _lzmaStream, preset, LzmaCheck.LzmaCheckCrc64);
+            else
             {
-                flags = 0,
-                block_size = 0,
-                timeout = 0,
-                preset = compression,
-                filters = IntPtr.Zero,
-                check = LzmaCheck.LzmaCheckCrc64,
-                threads = (uint)threads
-            };
-
-            var ret = Native.lzma_stream_encoder_mt(ref _lzmaStream, ref mt);
-            //var ret = Native.lzma_easy_encoder(ref _lzmaStream, compression, LzmaCheck.LzmaCheckCrc64);
+                if(threads <= 0) throw new ArgumentOutOfRangeException(nameof(threads));
+                if(threads > Environment.ProcessorCount)
+                {
+                    Trace.TraceWarning("{0} threads required, but only {1} processors available", threads, Environment.ProcessorCount);
+                    threads = Environment.ProcessorCount;
+                }
+                var mt = new LzmaMT()
+                {
+                    preset = preset,
+                    check = LzmaCheck.LzmaCheckCrc64,
+                    threads = (uint)threads
+                };
+                ret = Native.lzma_stream_encoder_mt(ref _lzmaStream, ref mt);
+            }
 
             if(ret == LzmaReturn.LzmaOK)
             {
@@ -92,13 +91,13 @@ namespace XZ.NET
                     throw new InsufficientMemoryException("Memory allocation failed");
 
                 case LzmaReturn.LzmaOptionsError:
-                    throw new Exception("Specified preset is not supported");
+                    throw new ArgumentException("Specified preset is not supported");
 
                 case LzmaReturn.LzmaUnsupportedCheck:
                     throw new Exception("Specified integrity check is not supported");
 
                 default:
-                    throw new Exception("Unknown error, possibly a bug");
+                    throw new Exception("Unknown error, possibly a bug: " + ret);
             }
         }
 
@@ -138,17 +137,17 @@ namespace XZ.NET
                     action = LzmaAction.LzmaFinish;
             }
 
-            var ret = LzmaReturn.LzmaOK;
-
             while (_lzmaStream.avail_in > 0)
             {
-                ret = Native.lzma_code(ref _lzmaStream, action);
+                var ret = Native.lzma_code(ref _lzmaStream, action);
+                if(ret > LzmaReturn.LzmaStreamEnd) ThrowError(ret);
 
                 if (action == LzmaAction.LzmaFinish)
                 {
                     while (ret != LzmaReturn.LzmaStreamEnd)
                     {
                         ret = Native.lzma_code(ref _lzmaStream, action);
+                        if(ret > LzmaReturn.LzmaStreamEnd) ThrowError(ret);
 
                         if (_lzmaStream.avail_out == 0 || ret == LzmaReturn.LzmaStreamEnd)
                         {
@@ -174,25 +173,16 @@ namespace XZ.NET
                     _lzmaStream.avail_out = BufSize;
                 }
             }
+        }
 
-            if (ret != LzmaReturn.LzmaOK)
+        void ThrowError(LzmaReturn ret)
+        {
+            //Native.lzma_end(ref _lzmaStream);
+            switch(ret)
             {
-                if (ret == LzmaReturn.LzmaStreamEnd)
-                    return;
-
-                Native.lzma_end(ref _lzmaStream);
-
-                switch (ret)
-                {
-                    case LzmaReturn.LzmaMemError:
-                        throw new InsufficientMemoryException("Memory allocation failed");
-
-                    case LzmaReturn.LzmaDataError:
-                        throw new Exception("File size limits exceeded");
-
-                    default:
-                        throw new Exception("Unknown error, possibly a bug");
-                }
+                case LzmaReturn.LzmaMemError: throw new InsufficientMemoryException("Memory allocation failed");
+                case LzmaReturn.LzmaDataError: throw new Exception("File size limits exceeded");
+                default: throw new Exception("Unknown error, possibly a bug: " + ret);
             }
         }
 
@@ -232,20 +222,20 @@ namespace XZ.NET
             _lzmaStream.avail_in = 0; //check if needed
 
             var ret = Native.lzma_code(ref _lzmaStream, LzmaAction.LzmaFinish);
-            var outManagedBuf = new byte[BufSize];
 
-            if (_lzmaStream.avail_out == 0 || ret == LzmaReturn.LzmaStreamEnd)
+            if (_lzmaStream.avail_out == 0 || ret == LzmaReturn.LzmaStreamEnd && _lzmaStream.avail_out < BufSize)
             {
-                var writeSize = BufSize - (int)_lzmaStream.avail_out;
-                Marshal.Copy(_outbuf, outManagedBuf, 0, writeSize);
-
-                _mInnerStream.Write(outManagedBuf, 0, writeSize);
+                var outManagedBuf = new byte[BufSize - (int)_lzmaStream.avail_out];
+                Marshal.Copy(_outbuf, outManagedBuf, 0, outManagedBuf.Length);
+                _mInnerStream.Write(outManagedBuf, 0, outManagedBuf.Length);
             }
 
             Native.lzma_end(ref _lzmaStream);
 
             Marshal.FreeHGlobal(_inbuf);
             Marshal.FreeHGlobal(_outbuf);
+
+            if(disposing && !leaveOpen) _mInnerStream?.Close();
 
             base.Dispose(disposing);
         }

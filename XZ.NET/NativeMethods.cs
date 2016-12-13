@@ -165,6 +165,9 @@ namespace XZ.NET
 
         internal delegate LzmaReturn lzma_stream_encoder_mt_delegate(ref LzmaStream stream, ref LzmaMT mt);
         internal static readonly lzma_stream_encoder_mt_delegate lzma_stream_encoder_mt = IntPtr.Size > 4 ? (lzma_stream_encoder_mt_delegate)NativeX64.lzma_stream_encoder_mt : NativeX86.lzma_stream_encoder_mt;
+
+        internal delegate LzmaReturn lzma_easy_encoder_delegate(ref LzmaStream stream, UInt32 preset, LzmaCheck check);
+        internal static readonly lzma_easy_encoder_delegate lzma_easy_encoder = IntPtr.Size > 4 ? (lzma_easy_encoder_delegate)NativeX64.lzma_easy_encoder : NativeX86.lzma_easy_encoder;
     }
 
     [System.Security.SuppressUnmanagedCodeSecurity]
@@ -194,6 +197,9 @@ namespace XZ.NET
 
         [DllImport("liblzma64.dll", CharSet = CharSet.Ansi, CallingConvention = CallingConvention.Cdecl)]
         internal static extern LzmaReturn lzma_stream_encoder_mt(ref LzmaStream stream, ref LzmaMT mt);
+
+        [DllImport("liblzma64.dll", CharSet = CharSet.Ansi, CallingConvention = CallingConvention.Cdecl)]
+        internal static extern LzmaReturn lzma_easy_encoder(ref LzmaStream stream, UInt32 preset, LzmaCheck check);
     }
 
     [System.Security.SuppressUnmanagedCodeSecurity]
@@ -223,5 +229,8 @@ namespace XZ.NET
 
         [DllImport("liblzma.dll", CharSet = CharSet.Ansi, CallingConvention = CallingConvention.Cdecl)]
         internal static extern LzmaReturn lzma_stream_encoder_mt(ref LzmaStream stream, ref LzmaMT mt);
+
+        [DllImport("liblzma.dll", CharSet = CharSet.Ansi, CallingConvention = CallingConvention.Cdecl)]
+        internal static extern LzmaReturn lzma_easy_encoder(ref LzmaStream stream, UInt32 preset, LzmaCheck check);
     }
 }
