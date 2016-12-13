@@ -118,11 +118,11 @@ namespace XZ.NET
     internal struct LzmaStream
     {
         public IntPtr next_in;
-        public UInt32 avail_in;
+        public UIntPtr avail_in;
         public UInt64 total_in;
 
         public IntPtr next_out;
-        public UInt32 avail_out;
+        public UIntPtr avail_out;
         public UInt64 total_out;
 
         public IntPtr allocator;
@@ -135,8 +135,8 @@ namespace XZ.NET
         private readonly IntPtr reserved_ptr4;
         private readonly UInt64 reserved_int1;
         private readonly UInt64 reserved_int2;
-        private readonly UInt32 reserved_int3;
-        private readonly UInt32 reserved_int4;
+        private readonly UIntPtr reserved_int3;
+        private readonly UIntPtr reserved_int4;
         private readonly UInt32 reserved_enum1;
         private readonly UInt32 reserved_enum2;
     }
