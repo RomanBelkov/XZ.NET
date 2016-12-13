@@ -29,7 +29,7 @@ using System.Runtime.InteropServices;
 
 namespace XZ.NET
 {
-    public sealed class XZOutputStream : Stream
+    public class XZOutputStream : Stream
     {
         private LzmaStream _lzmaStream;
         private readonly Stream _mInnerStream;

@@ -17,6 +17,13 @@ The intentions of this library is to provide basic operations with `.xz` file fo
 
 ## ChangeLog ##
 
+13/12/2016 - 2.0.0
+
+- Fixed x64 encoding/decoding
+- Removed separate x86/x64 build configurations
+- Exposed encoding options with more natural defaults
+- More robust error handling
+
 09/09/2015 - 1.2.0
 
 - Compression part of library should work fine from now on
