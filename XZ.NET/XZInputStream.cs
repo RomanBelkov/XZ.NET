@@ -62,6 +62,7 @@ namespace XZ.NET
                 return;
             }
 
+            GC.SuppressFinalize(this);
             switch (ret)
             {
                 case LzmaReturn.LzmaMemError:
@@ -106,7 +107,8 @@ namespace XZ.NET
             {
                 if (_lzmaStream.avail_in == UIntPtr.Zero)
                 {
-                    _lzmaStream.avail_in = (UIntPtr)checked((uint)_mInnerStream.Read(readBuf, 0, readBuf.Length));
+                    _lzmaStream.avail_in = (UIntPtr)_mInnerStream.Read(readBuf, 0, readBuf.Length);
+                    if((uint)_lzmaStream.avail_in > BufSize) throw new InvalidOperationException();
                     Marshal.Copy(readBuf, 0, _inbuf, (int)_lzmaStream.avail_in);
                     _lzmaStream.next_in = _inbuf;
 
@@ -251,10 +253,7 @@ namespace XZ.NET
             set { throw new NotSupportedException("XZ Stream does not support setting position"); }
         }
 
-        public override void Close()
-        {
-            Dispose(true);
-        }
+        ~XZInputStream() => Dispose(false);
 
         protected override void Dispose(bool disposing)
         {
