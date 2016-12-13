@@ -34,6 +34,7 @@ namespace XZ.NET
         private readonly List<byte> _mInternalBuffer = new List<byte>();
         private LzmaStream _lzmaStream;
         private readonly Stream _mInnerStream;
+        private readonly bool leaveOpen;
         private readonly IntPtr _inbuf;
         private readonly IntPtr _outbuf;
         private long _length;
@@ -43,21 +44,24 @@ namespace XZ.NET
         private const int BufSize = 512;
         private const int LzmaConcatenatedFlag = 0x08;
 
-        public XZInputStream(Stream s)
+        public XZInputStream(Stream s) : this(s, false) { }
+        public XZInputStream(Stream s, bool leaveOpen)
         {
             _mInnerStream = s;
+            this.leaveOpen = leaveOpen;
 
             var ret = Native.lzma_stream_decoder(ref _lzmaStream, UInt64.MaxValue, LzmaConcatenatedFlag);
 
-            _inbuf = Marshal.AllocHGlobal(BufSize);
-            _outbuf = Marshal.AllocHGlobal(BufSize);
+            if(ret == LzmaReturn.LzmaOK)
+            {
+                _inbuf = Marshal.AllocHGlobal(BufSize);
+                _outbuf = Marshal.AllocHGlobal(BufSize);
 
-            _lzmaStream.avail_in = 0;
-            _lzmaStream.next_out = _outbuf;
-            _lzmaStream.avail_out = BufSize;
-
-            if (ret == LzmaReturn.LzmaOK)
+                _lzmaStream.avail_in = 0;
+                _lzmaStream.next_out = _outbuf;
+                _lzmaStream.avail_out = BufSize;
                 return;
+            }
 
             switch (ret)
             {
@@ -91,7 +95,7 @@ namespace XZ.NET
         /// <summary>
         /// Reads bytes from stream
         /// </summary>
-        /// <returns>byte read or -1 on end of stream</returns>
+        /// <returns>Number of bytes read or 0 on end of stream</returns>
         public override int Read(byte[] buffer, int offset, int count)
         {
             var action = LzmaAction.LzmaRun;
@@ -203,17 +207,17 @@ namespace XZ.NET
 
                 if (_length == 0)
                 {
-                    var lzmaStreamFlags = new LzmaStreamFlags();
                     var streamFooter = new byte[streamFooterSize];
 
                     _mInnerStream.Seek(-streamFooterSize, SeekOrigin.End);
-                    _mInnerStream.Read(streamFooter, 0, streamFooterSize);
+                    if(_mInnerStream.Read(streamFooter, 0, streamFooterSize) != streamFooterSize) throw new InvalidDataException();
 
+                    var lzmaStreamFlags = new LzmaStreamFlags();
                     Native.lzma_stream_footer_decode(ref lzmaStreamFlags, streamFooter);
                     var indexPointer = new byte[lzmaStreamFlags.backwardSize];
 
                     _mInnerStream.Seek(-(Int64)streamFooterSize - (Int64)lzmaStreamFlags.backwardSize, SeekOrigin.End);
-                    _mInnerStream.Read(indexPointer, 0, (int)lzmaStreamFlags.backwardSize);
+                    if(_mInnerStream.Read(indexPointer, 0, (int)lzmaStreamFlags.backwardSize) != (int)lzmaStreamFlags.backwardSize) throw new InvalidDataException();
                     _mInnerStream.Seek(0, SeekOrigin.Begin);
 
                     var index = IntPtr.Zero;
@@ -259,6 +263,8 @@ namespace XZ.NET
 
             Marshal.FreeHGlobal(_inbuf);
             Marshal.FreeHGlobal(_outbuf);
+
+            if(disposing && !leaveOpen) _mInnerStream?.Close();
 
             base.Dispose(disposing);
         }
