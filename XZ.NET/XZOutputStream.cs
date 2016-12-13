@@ -89,7 +89,7 @@ namespace XZ.NET
             switch (ret)
             {
                 case LzmaReturn.LzmaMemError:
-                    throw new Exception("Memory allocation failed");
+                    throw new InsufficientMemoryException("Memory allocation failed");
 
                 case LzmaReturn.LzmaOptionsError:
                     throw new Exception("Specified preset is not supported");
@@ -131,7 +131,7 @@ namespace XZ.NET
             if (_lzmaStream.avail_in == 0)
             {
                 _lzmaStream.avail_in = (uint)count;
-                Marshal.Copy(buffer, 0, _inbuf, (int)_lzmaStream.avail_in);
+                Marshal.Copy(buffer, offset, _inbuf, (int)_lzmaStream.avail_in);
                 _lzmaStream.next_in = _inbuf;
 
                 if (count < BufSize)
@@ -185,7 +185,7 @@ namespace XZ.NET
                 switch (ret)
                 {
                     case LzmaReturn.LzmaMemError:
-                        throw new Exception("Memory allocation failed");
+                        throw new InsufficientMemoryException("Memory allocation failed");
 
                     case LzmaReturn.LzmaDataError:
                         throw new Exception("File size limits exceeded");

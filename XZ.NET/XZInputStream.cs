@@ -62,7 +62,7 @@ namespace XZ.NET
             switch (ret)
             {
                 case LzmaReturn.LzmaMemError:
-                    throw new Exception("Memory allocation failed");
+                    throw new InsufficientMemoryException("Memory allocation failed");
 
                 case LzmaReturn.LzmaOptionsError:
                     throw new Exception("Unsupported decompressor flags");
@@ -136,19 +136,19 @@ namespace XZ.NET
                     switch (ret)
                     {
                         case LzmaReturn.LzmaMemError:
-                            throw new Exception("Memory allocation failed");
+                            throw new InsufficientMemoryException("Memory allocation failed");
 
                         case LzmaReturn.LzmaFormatError:
-                            throw new Exception("The input is not in the .xz format");
+                            throw new InvalidDataException("The input is not in the .xz format");
 
                         case LzmaReturn.LzmaOptionsError:
                             throw new Exception("Unsupported compression options");
 
                         case LzmaReturn.LzmaDataError:
-                            throw new Exception("Compressed file is corrupt");
+                            throw new InvalidDataException("Compressed file is corrupt");
 
                         case LzmaReturn.LzmaBufError:
-                            throw new Exception("Compressed file is truncated or otherwise corrupt");
+                            throw new InvalidDataException("Compressed file is truncated or otherwise corrupt");
 
                         default:
                             throw new Exception("Uknown error.Possibly a bug");
@@ -226,7 +226,7 @@ namespace XZ.NET
                     if (inPos != lzmaStreamFlags.backwardSize)
                     {
                         Native.lzma_index_end(index, IntPtr.Zero);
-                        throw new Exception("Index decoding failed!");
+                        throw new InvalidDataException("Index decoding failed!");
                     }
 
                     var uSize = Native.lzma_index_uncompressed_size(index);
