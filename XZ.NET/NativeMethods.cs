@@ -134,44 +134,46 @@ namespace XZ.NET
 
     static unsafe class Native
     {
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        const MethodImplOptions inline = (MethodImplOptions)0x100; // AggressiveInlining is not defined before .NET 4.5
+
+        [MethodImpl(inline)]
         internal static LzmaReturn lzma_stream_decoder(ref LzmaStream stream, UInt64 memLimit, UInt32 flags)
             => IntPtr.Size > 4 ? X64.lzma_stream_decoder(ref stream, memLimit, flags) : X86.lzma_stream_decoder(ref stream, memLimit, flags);
 
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        [MethodImpl(inline)]
         internal static LzmaReturn lzma_code(ref LzmaStream stream, LzmaAction action) => IntPtr.Size > 4 ? X64.lzma_code(ref stream, action) : X86.lzma_code(ref stream, action);
 
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        [MethodImpl(inline)]
         internal static LzmaReturn lzma_stream_footer_decode(LzmaStreamFlags* options, byte[] inp)
             => IntPtr.Size > 4 ? X64.lzma_stream_footer_decode(options, inp) : X86.lzma_stream_footer_decode(options, inp);
 
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        [MethodImpl(inline)]
         internal static UInt64 lzma_index_uncompressed_size(void* i) => IntPtr.Size > 4 ? X64.lzma_index_uncompressed_size(i) : X86.lzma_index_uncompressed_size(i);
 
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        [MethodImpl(inline)]
         internal static LzmaReturn lzma_index_buffer_decode(void** i, UInt64* memLimit, void* allocator, byte[] indexBuffer, UIntPtr* inPosition, UIntPtr inSize)
             => IntPtr.Size > 4 ? X64.lzma_index_buffer_decode(i, memLimit, allocator, indexBuffer, inPosition, inSize)
             : X86.lzma_index_buffer_decode(i, memLimit, allocator, indexBuffer, inPosition, inSize);
 
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        [MethodImpl(inline)]
         internal static void lzma_index_end(void* i, void* allocator)
         {
             if(IntPtr.Size > 4) X64.lzma_index_end(i, allocator);
             else X86.lzma_index_end(i, allocator);
         }
 
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        [MethodImpl(inline)]
         internal static void lzma_end(ref LzmaStream stream)
         {
             if(IntPtr.Size > 4) X64.lzma_end(ref stream);
             else X86.lzma_end(ref stream);
         }
 
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        [MethodImpl(inline)]
         internal static LzmaReturn lzma_stream_encoder_mt(ref LzmaStream stream, ref LzmaMT mt)
             => IntPtr.Size > 4 ? X64.lzma_stream_encoder_mt(ref stream, ref mt) : X86.lzma_stream_encoder_mt(ref stream, ref mt);
 
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        [MethodImpl(inline)]
         internal static LzmaReturn lzma_easy_encoder(ref LzmaStream stream, UInt32 preset, LzmaCheck check)
             => IntPtr.Size > 4 ? X64.lzma_easy_encoder(ref stream, preset, check) : X86.lzma_easy_encoder(ref stream, preset, check);
 

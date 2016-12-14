@@ -23,6 +23,7 @@ The intentions of this library is to provide basic operations with `.xz` file fo
 - Removed separate x86/x64 build configurations
 - Exposed encoding options with more natural defaults
 - More robust error handling
+- Guard against buffer overflows
 
 09/09/2015 - 1.2.0
 
