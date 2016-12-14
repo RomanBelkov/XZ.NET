@@ -29,7 +29,7 @@ using System.Runtime.InteropServices;
 
 namespace XZ.NET
 {
-    public class XZInputStream : Stream
+    public unsafe class XZInputStream : Stream
     {
         private readonly List<byte> _mInternalBuffer = new List<byte>();
         private LzmaStream _lzmaStream;
@@ -213,30 +213,25 @@ namespace XZ.NET
                     _mInnerStream.Seek(-streamFooterSize, SeekOrigin.End);
                     if(_mInnerStream.Read(streamFooter, 0, streamFooterSize) != streamFooterSize) throw new InvalidDataException();
 
-                    var lzmaStreamFlags = new LzmaStreamFlags();
-                    Native.lzma_stream_footer_decode(ref lzmaStreamFlags, streamFooter);
+                    LzmaStreamFlags lzmaStreamFlags;
+                    var ret = Native.lzma_stream_footer_decode(&lzmaStreamFlags, streamFooter);
+                    if(ret != LzmaReturn.LzmaOK) throw new InvalidDataException("Index decoding failed: " + ret);
                     var indexPointer = new byte[lzmaStreamFlags.backwardSize];
 
-                    _mInnerStream.Seek(-(Int64)streamFooterSize - (Int64)lzmaStreamFlags.backwardSize, SeekOrigin.End);
-                    if(_mInnerStream.Read(indexPointer, 0, (int)lzmaStreamFlags.backwardSize) != (int)lzmaStreamFlags.backwardSize) throw new InvalidDataException();
+                    _mInnerStream.Seek(-streamFooterSize - indexPointer.Length, SeekOrigin.End);
+                    if(_mInnerStream.Read(indexPointer, 0, indexPointer.Length) != indexPointer.Length) throw new InvalidDataException();
                     _mInnerStream.Seek(0, SeekOrigin.Begin);
 
-                    var index = IntPtr.Zero;
+                    void* index;
                     var memLimit = UInt64.MaxValue;
-                    UInt32 inPos = 0;
+                    UIntPtr inPos;
 
-                    Native.lzma_index_buffer_decode(ref index, ref memLimit, IntPtr.Zero, indexPointer, ref inPos,
-                        lzmaStreamFlags.backwardSize);
-
-                    if (inPos != lzmaStreamFlags.backwardSize)
-                    {
-                        Native.lzma_index_end(index, IntPtr.Zero);
-                        throw new InvalidDataException("Index decoding failed!");
-                    }
+                    ret = Native.lzma_index_buffer_decode(&index, &memLimit, null, indexPointer, &inPos, (UIntPtr)indexPointer.Length);
+                    if(ret != LzmaReturn.LzmaOK) throw new InvalidDataException("Index decoding failed: " + ret);
 
                     var uSize = Native.lzma_index_uncompressed_size(index);
 
-                    Native.lzma_index_end(index, IntPtr.Zero);
+                    Native.lzma_index_end(index, null);
                     _length = (Int64)uSize;
                     return _length;
                 }
