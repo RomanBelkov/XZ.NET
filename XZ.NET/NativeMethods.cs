@@ -106,19 +106,19 @@ namespace XZ.NET
         private readonly IntPtr reserved_ptr4;
     }
 
-    internal struct LzmaStream
+    internal unsafe struct LzmaStream
     {
-        public IntPtr next_in;
+        public byte* next_in;
         public UIntPtr avail_in;
         public UInt64 total_in;
 
-        public IntPtr next_out;
+        public byte* next_out;
         public UIntPtr avail_out;
         public UInt64 total_out;
 
         public IntPtr allocator;
 
-        private readonly IntPtr internalState;
+        public IntPtr internalState;
 
         private readonly IntPtr reserved_ptr1;
         private readonly IntPtr reserved_ptr2;
