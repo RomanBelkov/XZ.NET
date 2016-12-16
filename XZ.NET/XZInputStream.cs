@@ -52,7 +52,7 @@ namespace XZ.NET
 
             var ret = Native.lzma_stream_decoder(ref _lzmaStream, UInt64.MaxValue, LzmaConcatenatedFlag);
 
-            if(ret == LzmaReturn.LzmaOK)
+            if (ret == LzmaReturn.LzmaOK)
             {
                 _inbuf = Marshal.AllocHGlobal(BufSize);
                 _outbuf = Marshal.AllocHGlobal(BufSize);
@@ -248,7 +248,7 @@ namespace XZ.NET
             set { throw new NotSupportedException("XZ Stream does not support setting position"); }
         }
 
-        ~XZInputStream() => Dispose(false);
+        ~XZInputStream() { Dispose(false); }
 
         protected override void Dispose(bool disposing)
         {

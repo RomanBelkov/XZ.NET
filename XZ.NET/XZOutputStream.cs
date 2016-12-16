@@ -60,7 +60,7 @@ namespace XZ.NET
             else
             {
                 if(threads <= 0) throw new ArgumentOutOfRangeException(nameof(threads));
-                if(threads > Environment.ProcessorCount)
+                if (threads > Environment.ProcessorCount)
                 {
                     Trace.TraceWarning("{0} threads required, but only {1} processors available", threads, Environment.ProcessorCount);
                     threads = Environment.ProcessorCount;
@@ -74,7 +74,7 @@ namespace XZ.NET
                 ret = Native.lzma_stream_encoder_mt(ref _lzmaStream, ref mt);
             }
 
-            if(ret == LzmaReturn.LzmaOK)
+            if (ret == LzmaReturn.LzmaOK)
             {
                 _inbuf = Marshal.AllocHGlobal(BufSize);
                 _outbuf = Marshal.AllocHGlobal(BufSize);
@@ -211,7 +211,7 @@ namespace XZ.NET
             base.Close();
         }
 
-        ~XZOutputStream() => Dispose(false);
+        ~XZOutputStream() { Dispose(false); }
 
         protected override void Dispose(bool disposing)
         {
