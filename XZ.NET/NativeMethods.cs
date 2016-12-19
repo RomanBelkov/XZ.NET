@@ -141,6 +141,11 @@ namespace XZ.NET
             => IntPtr.Size > 4 ? X64.lzma_stream_decoder(ref stream, memLimit, flags) : X86.lzma_stream_decoder(ref stream, memLimit, flags);
 
         [MethodImpl(inline)]
+        internal static LzmaReturn lzma_stream_buffer_decode(UInt64* memlimit, UInt32 flags, void* allocator, byte[] @in, UIntPtr* in_pos, UIntPtr in_size, byte[] @out, UIntPtr* out_pos, UIntPtr out_size)
+            => IntPtr.Size > 4 ? X64.lzma_stream_buffer_decode(memlimit, flags, allocator, @in, in_pos, in_size, @out, out_pos, out_size)
+            : X86.lzma_stream_buffer_decode(memlimit, flags, allocator, @in, in_pos, in_size, @out, out_pos, out_size);
+
+        [MethodImpl(inline)]
         internal static LzmaReturn lzma_code(ref LzmaStream stream, LzmaAction action) => IntPtr.Size > 4 ? X64.lzma_code(ref stream, action) : X86.lzma_code(ref stream, action);
 
         [MethodImpl(inline)]
@@ -184,6 +189,9 @@ namespace XZ.NET
             internal static extern LzmaReturn lzma_stream_decoder(ref LzmaStream stream, UInt64 memLimit, UInt32 flags);
 
             [DllImport("liblzma64.dll", CharSet = CharSet.Ansi, CallingConvention = CallingConvention.Cdecl)]
+            internal static extern LzmaReturn lzma_stream_buffer_decode(UInt64* memlimit, UInt32 flags, void* allocator, byte[] @in, UIntPtr* in_pos, UIntPtr in_size, byte[] @out, UIntPtr* out_pos, UIntPtr out_size);
+
+            [DllImport("liblzma64.dll", CharSet = CharSet.Ansi, CallingConvention = CallingConvention.Cdecl)]
             internal static extern LzmaReturn lzma_code(ref LzmaStream stream, LzmaAction action);
 
             [DllImport("liblzma64.dll", CharSet = CharSet.Ansi, CallingConvention = CallingConvention.Cdecl)]
@@ -213,6 +221,9 @@ namespace XZ.NET
         {
             [DllImport("liblzma.dll", CharSet = CharSet.Ansi, CallingConvention = CallingConvention.Cdecl)]
             internal static extern LzmaReturn lzma_stream_decoder(ref LzmaStream stream, UInt64 memLimit, UInt32 flags);
+
+            [DllImport("liblzma.dll", CharSet = CharSet.Ansi, CallingConvention = CallingConvention.Cdecl)]
+            internal static extern LzmaReturn lzma_stream_buffer_decode(UInt64* memlimit, UInt32 flags, void* allocator, byte[] @in, UIntPtr* in_pos, UIntPtr in_size, byte[] @out, UIntPtr* out_pos, UIntPtr out_size);
 
             [DllImport("liblzma.dll", CharSet = CharSet.Ansi, CallingConvention = CallingConvention.Cdecl)]
             internal static extern LzmaReturn lzma_code(ref LzmaStream stream, LzmaAction action);

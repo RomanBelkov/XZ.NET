@@ -142,6 +142,11 @@ namespace XZ.NET
         Exception ThrowError(LzmaReturn ret)
         {
             Native.lzma_end(ref _lzmaStream);
+            return GetDecodingError(ret);
+        }
+
+        static Exception GetDecodingError(LzmaReturn ret)
+        {
             switch(ret)
             {
                 case LzmaReturn.LzmaMemError: return new InsufficientMemoryException("Memory allocation failed");
@@ -184,48 +189,70 @@ namespace XZ.NET
 
                 if (_length == 0)
                 {
-                    LzmaStreamFlags lzmaStreamFlags;
-                    LzmaReturn ret;
-                    UIntPtr inPos;
-                    byte[] buf;
-
                     var str = _mInnerStream;
                     if(str != null)
                     {
-                        var streamFooter = new byte[streamFooterSize];
+                        var buf = new byte[streamFooterSize];
 
                         str.Seek(-streamFooterSize, SeekOrigin.End);
-                        if(str.Read(streamFooter, 0, streamFooterSize) != streamFooterSize) throw new InvalidDataException();
+                        if(str.Read(buf, 0, streamFooterSize) != streamFooterSize) throw new InvalidDataException();
 
-                        fixed (byte* inp = &streamFooter[0]) ret = Native.lzma_stream_footer_decode(&lzmaStreamFlags, inp);
-                        if(ret != LzmaReturn.LzmaOK) throw new InvalidDataException("Index decoding failed: " + ret);
-                        buf = new byte[lzmaStreamFlags.backwardSize];
+                        var len = GetIndexSize(ref buf[0]);
+                        if(len != streamFooterSize) buf = new byte[len];
 
                         str.Seek(-streamFooterSize - buf.Length, SeekOrigin.End);
                         if(str.Read(buf, 0, buf.Length) != buf.Length) throw new InvalidDataException();
                         str.Seek(0, SeekOrigin.Begin);
+                        _length = GetUncompressedSize(buf, UIntPtr.Zero);
                     }
-                    else
-                    {
-                        buf = _inbuf;
-                        fixed (byte* inp = &buf[buf.Length - streamFooterSize]) ret = Native.lzma_stream_footer_decode(&lzmaStreamFlags, inp);
-                        if(ret != LzmaReturn.LzmaOK) throw new InvalidDataException("Index decoding failed: " + ret);
-                        inPos = (UIntPtr)((uint)buf.Length - streamFooterSize - lzmaStreamFlags.backwardSize);
-                    }
-
-                    void* index;
-                    var memLimit = UInt64.MaxValue;
-
-                    ret = Native.lzma_index_buffer_decode(&index, &memLimit, null, buf, &inPos, (UIntPtr)buf.Length);
-                    if(ret != LzmaReturn.LzmaOK) throw new InvalidDataException("Index decoding failed: " + ret);
-
-                    var uSize = Native.lzma_index_uncompressed_size(index);
-
-                    Native.lzma_index_end(index, null);
-                    _length = (Int64)uSize;
+                    else _length = GetUncompressedSize(_inbuf);
                 }
                 return _length;
             }
+        }
+
+        static ulong GetIndexSize(ref byte footer)
+        {
+            LzmaStreamFlags lzmaStreamFlags;
+            LzmaReturn ret;
+            fixed (byte* inp = &footer) ret = Native.lzma_stream_footer_decode(&lzmaStreamFlags, inp);
+            if(ret != LzmaReturn.LzmaOK) throw IndexDecodingError(ret);
+            return lzmaStreamFlags.backwardSize;
+        }
+
+        public static long GetUncompressedSize(byte[] buf)
+        {
+            const int streamFooterSize = 12;
+            return GetUncompressedSize(buf, (UIntPtr)((uint)buf.Length - streamFooterSize - GetIndexSize(ref buf[buf.Length - streamFooterSize])));
+        }
+
+        static long GetUncompressedSize(byte[] buf, UIntPtr inPos)
+        {
+            void* index;
+            var memLimit = UInt64.MaxValue;
+
+            var ret = Native.lzma_index_buffer_decode(&index, &memLimit, null, buf, &inPos, (UIntPtr)buf.Length);
+            if(ret != LzmaReturn.LzmaOK) throw IndexDecodingError(ret);
+
+            var uSize = Native.lzma_index_uncompressed_size(index);
+            Native.lzma_index_end(index, null);
+            return (long)uSize;
+        }
+
+        static Exception IndexDecodingError(LzmaReturn ret) => new InvalidDataException("Index decoding failed: " + ret);
+
+        /// <summary>
+        /// Single-call buffer decoding
+        /// </summary>
+        public static byte[] Decode(byte[] buffer)
+        {
+            var res = new byte[GetUncompressedSize(buffer)];
+
+            var memLimit = UInt64.MaxValue;
+            UIntPtr inPos, outPos;
+            var ret = Native.lzma_stream_buffer_decode(&memLimit, LzmaConcatenatedFlag, null, buffer, &inPos, (UIntPtr)buffer.Length, res, &outPos, (UIntPtr)res.Length);
+            if(ret != LzmaReturn.LzmaOK) throw GetDecodingError(ret);
+            return res;
         }
 
         public override long Position
