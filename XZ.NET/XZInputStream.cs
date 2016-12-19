@@ -42,18 +42,26 @@ namespace XZ.NET
         private const int LzmaConcatenatedFlag = 0x08;
 
         public XZInputStream(Stream s) : this(s, false) { }
-        public XZInputStream(Stream s, bool leaveOpen)
+        public XZInputStream(Stream s, bool leaveOpen) : this()
         {
+            if(s == null) throw new ArgumentNullException();
             _mInnerStream = s;
             this.leaveOpen = leaveOpen;
+            _inbuf = new byte[BufSize];
+        }
 
+        public XZInputStream(byte[] buffer) : this()
+        {
+            _inbuf = buffer;
+            _lzmaStream.avail_in = (UIntPtr)buffer.Length;
+        }
+
+        XZInputStream()
+        {
             var ret = Native.lzma_stream_decoder(ref _lzmaStream, UInt64.MaxValue, LzmaConcatenatedFlag);
 
             if(ret == LzmaReturn.LzmaOK)
-            {
-                _inbuf = new byte[BufSize];
                 return;
-            }
 
             GC.SuppressFinalize(this);
             switch (ret)
@@ -100,7 +108,7 @@ namespace XZ.NET
             {
                 if (_lzmaStream.avail_in == UIntPtr.Zero)
                 {
-                    var read = _mInnerStream.Read(_inbuf, 0, BufSize);
+                    var read = _mInnerStream?.Read(_inbuf, 0, BufSize) ?? 0;
                     if((uint)read > BufSize) throw new InvalidDataException();
                     _lzmaStream.avail_in = (UIntPtr)read;
                     _inbufOffset = 0;
@@ -118,7 +126,7 @@ namespace XZ.NET
                         _lzmaStream.next_out = outbuf;
                         ret = Native.lzma_code(ref _lzmaStream, action);
                     }
-                    _inbufOffset = (int)(_lzmaStream.next_in - inbuf);
+                    _inbufOffset += (int)(_lzmaStream.next_in - inbuf);
                 }
                 if(ret > LzmaReturn.LzmaStreamEnd) throw ThrowError(ret);
 
@@ -176,37 +184,47 @@ namespace XZ.NET
 
                 if (_length == 0)
                 {
-                    var streamFooter = new byte[streamFooterSize];
-
-                    _mInnerStream.Seek(-streamFooterSize, SeekOrigin.End);
-                    if(_mInnerStream.Read(streamFooter, 0, streamFooterSize) != streamFooterSize) throw new InvalidDataException();
-
                     LzmaStreamFlags lzmaStreamFlags;
-                    var ret = Native.lzma_stream_footer_decode(&lzmaStreamFlags, streamFooter);
-                    if(ret != LzmaReturn.LzmaOK) throw new InvalidDataException("Index decoding failed: " + ret);
-                    var indexPointer = new byte[lzmaStreamFlags.backwardSize];
+                    LzmaReturn ret;
+                    UIntPtr inPos;
+                    byte[] buf;
 
-                    _mInnerStream.Seek(-streamFooterSize - indexPointer.Length, SeekOrigin.End);
-                    if(_mInnerStream.Read(indexPointer, 0, indexPointer.Length) != indexPointer.Length) throw new InvalidDataException();
-                    _mInnerStream.Seek(0, SeekOrigin.Begin);
+                    var str = _mInnerStream;
+                    if(str != null)
+                    {
+                        var streamFooter = new byte[streamFooterSize];
+
+                        str.Seek(-streamFooterSize, SeekOrigin.End);
+                        if(str.Read(streamFooter, 0, streamFooterSize) != streamFooterSize) throw new InvalidDataException();
+
+                        fixed (byte* inp = &streamFooter[0]) ret = Native.lzma_stream_footer_decode(&lzmaStreamFlags, inp);
+                        if(ret != LzmaReturn.LzmaOK) throw new InvalidDataException("Index decoding failed: " + ret);
+                        buf = new byte[lzmaStreamFlags.backwardSize];
+
+                        str.Seek(-streamFooterSize - buf.Length, SeekOrigin.End);
+                        if(str.Read(buf, 0, buf.Length) != buf.Length) throw new InvalidDataException();
+                        str.Seek(0, SeekOrigin.Begin);
+                    }
+                    else
+                    {
+                        buf = _inbuf;
+                        fixed (byte* inp = &buf[buf.Length - streamFooterSize]) ret = Native.lzma_stream_footer_decode(&lzmaStreamFlags, inp);
+                        if(ret != LzmaReturn.LzmaOK) throw new InvalidDataException("Index decoding failed: " + ret);
+                        inPos = (UIntPtr)((uint)buf.Length - streamFooterSize - lzmaStreamFlags.backwardSize);
+                    }
 
                     void* index;
                     var memLimit = UInt64.MaxValue;
-                    UIntPtr inPos;
 
-                    ret = Native.lzma_index_buffer_decode(&index, &memLimit, null, indexPointer, &inPos, (UIntPtr)indexPointer.Length);
+                    ret = Native.lzma_index_buffer_decode(&index, &memLimit, null, buf, &inPos, (UIntPtr)buf.Length);
                     if(ret != LzmaReturn.LzmaOK) throw new InvalidDataException("Index decoding failed: " + ret);
 
                     var uSize = Native.lzma_index_uncompressed_size(index);
 
                     Native.lzma_index_end(index, null);
                     _length = (Int64)uSize;
-                    return _length;
                 }
-                else
-                {
-                    return _length;
-                }
+                return _length;
             }
         }
 
