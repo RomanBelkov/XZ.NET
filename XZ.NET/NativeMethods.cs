@@ -182,6 +182,15 @@ namespace XZ.NET
         internal static LzmaReturn lzma_easy_encoder(ref LzmaStream stream, UInt32 preset, LzmaCheck check)
             => IntPtr.Size > 4 ? X64.lzma_easy_encoder(ref stream, preset, check) : X86.lzma_easy_encoder(ref stream, preset, check);
 
+        [MethodImpl(inline)]
+        internal static UIntPtr lzma_stream_buffer_bound(UIntPtr uncompressed_size)
+            => IntPtr.Size > 4 ? X64.lzma_stream_buffer_bound(uncompressed_size) : X86.lzma_stream_buffer_bound(uncompressed_size);
+
+        [MethodImpl(inline)]
+        internal static LzmaReturn lzma_easy_buffer_encode(UInt32 preset, LzmaCheck check, void* allocator, byte[] @in, UIntPtr in_size, byte[] @out, UIntPtr* out_pos, UIntPtr out_size)
+            => IntPtr.Size > 4 ? X64.lzma_easy_buffer_encode(preset, check, allocator, @in, in_size, @out, out_pos, out_size)
+            : X86.lzma_easy_buffer_encode(preset, check, allocator, @in, in_size, @out, out_pos, out_size);
+
         [System.Security.SuppressUnmanagedCodeSecurity]
         static class X64
         {
@@ -214,6 +223,12 @@ namespace XZ.NET
 
             [DllImport("liblzma64.dll", CharSet = CharSet.Ansi, CallingConvention = CallingConvention.Cdecl)]
             internal static extern LzmaReturn lzma_easy_encoder(ref LzmaStream stream, UInt32 preset, LzmaCheck check);
+
+            [DllImport("liblzma64.dll", CharSet = CharSet.Ansi, CallingConvention = CallingConvention.Cdecl)]
+            internal static extern UIntPtr lzma_stream_buffer_bound(UIntPtr uncompressed_size);
+
+            [DllImport("liblzma64.dll", CharSet = CharSet.Ansi, CallingConvention = CallingConvention.Cdecl)]
+            internal static extern LzmaReturn lzma_easy_buffer_encode(UInt32 preset, LzmaCheck check, void* allocator, byte[] @in, UIntPtr in_size, byte[] @out, UIntPtr* out_pos, UIntPtr out_size);
         }
 
         [System.Security.SuppressUnmanagedCodeSecurity]
@@ -248,6 +263,12 @@ namespace XZ.NET
 
             [DllImport("liblzma.dll", CharSet = CharSet.Ansi, CallingConvention = CallingConvention.Cdecl)]
             internal static extern LzmaReturn lzma_easy_encoder(ref LzmaStream stream, UInt32 preset, LzmaCheck check);
+
+            [DllImport("liblzma.dll", CharSet = CharSet.Ansi, CallingConvention = CallingConvention.Cdecl)]
+            internal static extern UIntPtr lzma_stream_buffer_bound(UIntPtr uncompressed_size);
+
+            [DllImport("liblzma.dll", CharSet = CharSet.Ansi, CallingConvention = CallingConvention.Cdecl)]
+            internal static extern LzmaReturn lzma_easy_buffer_encode(UInt32 preset, LzmaCheck check, void* allocator, byte[] @in, UIntPtr in_size, byte[] @out, UIntPtr* out_pos, UIntPtr out_size);
         }
     }
 }

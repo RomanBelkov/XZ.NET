@@ -80,20 +80,7 @@ namespace XZ.NET
             }
 
             GC.SuppressFinalize(this);
-            switch (ret)
-            {
-                case LzmaReturn.LzmaMemError:
-                    throw new InsufficientMemoryException("Memory allocation failed");
-
-                case LzmaReturn.LzmaOptionsError:
-                    throw new ArgumentException("Specified preset is not supported");
-
-                case LzmaReturn.LzmaUnsupportedCheck:
-                    throw new Exception("Specified integrity check is not supported");
-
-                default:
-                    throw new Exception("Unknown error, possibly a bug: " + ret);
-            }
+            throw GetError(ret);
         }
 
         public override void Flush()
@@ -149,9 +136,16 @@ namespace XZ.NET
         Exception ThrowError(LzmaReturn ret)
         {
             Native.lzma_end(ref _lzmaStream);
+            return GetError(ret);
+        }
+
+        static Exception GetError(LzmaReturn ret)
+        {
             switch(ret)
             {
                 case LzmaReturn.LzmaMemError: return new InsufficientMemoryException("Memory allocation failed");
+                case LzmaReturn.LzmaOptionsError: return new ArgumentException("Specified preset is not supported");
+                case LzmaReturn.LzmaUnsupportedCheck: return new Exception("Specified integrity check is not supported");
                 case LzmaReturn.LzmaDataError: return new InvalidDataException("File size limits exceeded");
                 default: return new Exception("Unknown error, possibly a bug: " + ret);
             }
@@ -208,6 +202,20 @@ namespace XZ.NET
             }
 
             base.Close();
+        }
+
+        /// <summary>
+        /// Single-call buffer encoding
+        /// </summary>
+        public static byte[] Encode(byte[] buffer, uint preset = DefaultPreset)
+        {
+            var res = new byte[(long)Native.lzma_stream_buffer_bound((UIntPtr)buffer.Length)];
+
+            UIntPtr outPos;
+            var ret = Native.lzma_easy_buffer_encode(preset, LzmaCheck.LzmaCheckCrc64, null, buffer, (UIntPtr)buffer.Length, res, &outPos, (UIntPtr)res.Length);
+            if(ret != LzmaReturn.LzmaOK) throw GetError(ret);
+            if((long)outPos < res.Length) Array.Resize(ref res, (int)(ulong)outPos);
+            return res;
         }
 
         ~XZOutputStream() => Dispose(false);

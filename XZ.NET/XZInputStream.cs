@@ -64,17 +64,7 @@ namespace XZ.NET
                 return;
 
             GC.SuppressFinalize(this);
-            switch (ret)
-            {
-                case LzmaReturn.LzmaMemError:
-                    throw new InsufficientMemoryException("Memory allocation failed");
-
-                case LzmaReturn.LzmaOptionsError:
-                    throw new Exception("Unsupported decompressor flags");
-
-                default:
-                    throw new Exception("Unknown error, possibly a bug");
-            }
+            throw GetDecodingError(ret);
         }
 
         #region Overrides
