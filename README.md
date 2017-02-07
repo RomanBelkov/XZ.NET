@@ -17,7 +17,7 @@ The intentions of this library is to provide basic operations with `.xz` file fo
 
 ## ChangeLog ##
 
-15/12/2016 - 2.0.0
+20/12/2016 - 2.0.0
 
 - Fixed x64 encoding/decoding
 - Removed separate x86/x64 build configurations
@@ -25,6 +25,7 @@ The intentions of this library is to provide basic operations with `.xz` file fo
 - More robust error handling
 - Guard against buffer overflows
 - Drastically reduced memory churn (2x-4x faster depending on workload)
+- Single-call buffer encoding/decoding functions
 
 09/09/2015 - 1.2.0
 
