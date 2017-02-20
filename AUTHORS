@@ -1,2 +1,5 @@
 Roman Belkov, Kirill Melentyev - first version of all files
 Carter Li                      - added conditional compilation (x86/x64)
+Pent Ploompuu                  - fixed x64 encoding/decoding, removed separate x86/x64 build configurations,
+                                 exposed encoding options with more natural defaults, more robust error handling,
+                                 drastically reduced memory churn, single-call buffer encoding/decoding

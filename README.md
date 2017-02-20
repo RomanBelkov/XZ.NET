@@ -11,11 +11,21 @@ This project uses a public domain compression library liblzma from XZ Utils and 
 
 The intentions of this library is to provide basic operations with `.xz` file format to .NET (C#, F#, VB) developers.
 
-*Please note that library is in the early stages of development and many features are missing. Also, bugs may be present. The library was tested with `i686-sse2`  and `x86-64` version of liblzma 5.2.1 (these versions are included in project under names liblzma.dll and liblzma64.dll).*
+*The library was tested with `i686-sse2`  and `x86-64` version of liblzma 5.2.1 (these versions are included in project under names liblzma.dll and liblzma64.dll).*
 
 **You can find some basic examples in 'Examples' folder of project.**
 
 ## ChangeLog ##
+
+20/12/2016 - 2.0.0
+
+- Fixed x64 encoding/decoding
+- Removed separate x86/x64 build configurations
+- Exposed encoding options with more natural defaults
+- More robust error handling
+- Guard against buffer overflows
+- Drastically reduced memory churn (2x-4x faster depending on workload)
+- Single-call buffer encoding/decoding functions
 
 09/09/2015 - 1.2.0
 
