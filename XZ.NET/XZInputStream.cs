@@ -31,7 +31,7 @@ namespace XZ.NET
     {
         private LzmaStream _lzmaStream;
         private readonly Stream _mInnerStream;
-        private readonly bool leaveOpen;
+        private readonly bool _leaveOpen;
         private readonly byte[] _inbuf;
         private int _inbufOffset;
         private long _length;
@@ -44,9 +44,8 @@ namespace XZ.NET
         public XZInputStream(Stream s) : this(s, false) { }
         public XZInputStream(Stream s, bool leaveOpen) : this()
         {
-            if(s == null) throw new ArgumentNullException();
-            _mInnerStream = s;
-            this.leaveOpen = leaveOpen;
+            _mInnerStream = s ?? throw new ArgumentNullException();
+            _leaveOpen = leaveOpen;
             _inbuf = new byte[BufSize];
         }
 
@@ -153,20 +152,11 @@ namespace XZ.NET
             throw new NotSupportedException("XZ Input stream does not support writing");
         }
 
-        public override bool CanRead
-        {
-            get { return true; }
-        }
+        public override bool CanRead => true;
 
-        public override bool CanSeek
-        {
-            get { return false; }
-        }
+        public override bool CanSeek => false;
 
-        public override bool CanWrite
-        {
-            get { return false; }
-        }
+        public override bool CanWrite => false;
 
         /// <summary>
         /// Gets the size of uncompressed data in bytes
@@ -247,8 +237,8 @@ namespace XZ.NET
 
         public override long Position
         {
-            get { throw new NotSupportedException("XZ Stream does not support getting position"); }
-            set { throw new NotSupportedException("XZ Stream does not support setting position"); }
+            get => throw new NotSupportedException("XZ Stream does not support getting position");
+            set => throw new NotSupportedException("XZ Stream does not support setting position");
         }
 
         ~XZInputStream() { Dispose(false); }
@@ -257,7 +247,7 @@ namespace XZ.NET
         {
             Native.lzma_end(ref _lzmaStream);
 
-            if(disposing && !leaveOpen) _mInnerStream?.Close();
+            if(disposing && !_leaveOpen) _mInnerStream?.Close();
 
             base.Dispose(disposing);
         }

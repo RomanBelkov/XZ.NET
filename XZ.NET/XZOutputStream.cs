@@ -32,7 +32,7 @@ namespace XZ.NET
     {
         private LzmaStream _lzmaStream;
         private readonly Stream _mInnerStream;
-        private readonly bool leaveOpen;
+        private readonly bool _leaveOpen;
         private readonly byte[] _outbuf;
 
         /// <summary>
@@ -51,7 +51,7 @@ namespace XZ.NET
         public XZOutputStream(Stream s, int threads, uint preset, bool leaveOpen)
         {
             _mInnerStream = s;
-            this.leaveOpen = leaveOpen;
+            _leaveOpen = leaveOpen;
 
             LzmaReturn ret;
             if(threads == 1) ret = Native.lzma_easy_encoder(ref _lzmaStream, preset, LzmaCheck.LzmaCheckCrc64);
@@ -151,30 +151,18 @@ namespace XZ.NET
             }
         }
 
-        public override bool CanRead
-        {
-            get { return false; }
-        }
+        public override bool CanRead => false;
 
-        public override bool CanSeek
-        {
-            get { return false; }
-        }
+        public override bool CanSeek => false;
 
-        public override bool CanWrite
-        {
-            get { return true; }
-        }
+        public override bool CanWrite => true;
 
-        public override long Length
-        {
-            get { throw new NotSupportedException(); }
-        }
+        public override long Length => throw new NotSupportedException();
 
         public override long Position
         {
-            get { throw new NotSupportedException(); }
-            set { throw new NotSupportedException(); }
+            get => throw new NotSupportedException();
+            set => throw new NotSupportedException();
         }
 
         public override void Close()
@@ -224,7 +212,7 @@ namespace XZ.NET
         {
             Native.lzma_end(ref _lzmaStream);
 
-            if(disposing && !leaveOpen) _mInnerStream?.Close();
+            if(disposing && !_leaveOpen) _mInnerStream?.Close();
 
             base.Dispose(disposing);
         }
