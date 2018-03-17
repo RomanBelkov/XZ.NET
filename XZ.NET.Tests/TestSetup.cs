@@ -19,26 +19,11 @@ namespace XZ.NET.Tests
         {
             BaseDir = Path.GetFullPath(Path.Combine(TestHelper.GetProgramAbsolutePath(), "..", ".."));
             SampleDir = Path.Combine(BaseDir, "Samples");
-
-            /*
-            switch (IntPtr.Size)
-            {
-                case 8:
-                    Wim.GlobalInit(Path.Combine("x64", "libwim-15.dll"));
-                    break;
-                case 4:
-                    Wim.GlobalInit(Path.Combine("x86", "libwim-15.dll"));
-                    break;
-                default:
-                    throw new PlatformNotSupportedException();
-            }
-            */
         }
 
         [AssemblyCleanup]
         public static void Cleanup()
         {
-            // Wim.GlobalCleanup();
         }
     }
 
