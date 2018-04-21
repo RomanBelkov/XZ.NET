@@ -15,12 +15,21 @@ namespace XZ.NET.Tests
         [TestCategory("XZ.NET")]
         public void Compress()
         {
-            Compress_Template("A.pdf", 9);
-            Compress_Template("B.txt", XZOutputStream.DefaultPreset);
-            Compress_Template("C.bin", 1);
+            Compress_Template("A.pdf", 1, 9);
+            Compress_Template("B.txt", 1, XZOutputStream.DefaultPreset);
+            Compress_Template("C.bin", 1, 1);
         }
 
-        public void Compress_Template(string sampleFileName, uint preset)
+        [TestMethod]
+        [TestCategory("XZ.NET")]
+        public void CompressMultithread()
+        {
+            Compress_Template("A.pdf", Environment.ProcessorCount, 9);
+            Compress_Template("B.txt", Environment.ProcessorCount, XZOutputStream.DefaultPreset);
+            Compress_Template("C.bin", Environment.ProcessorCount, 1);
+        }
+
+        public void Compress_Template(string sampleFileName, int threads, uint preset)
         {
             string tempDecompFile = Path.Combine(Path.GetTempPath(), Path.GetRandomFileName());
             string tempXzFile = tempDecompFile + ".xz";
@@ -29,14 +38,14 @@ namespace XZ.NET.Tests
                 string sampleFile = Path.Combine(TestSetup.SampleDir, sampleFileName);
                 using (FileStream xzCompFs = new FileStream(tempXzFile, FileMode.Create, FileAccess.Write, FileShare.None))
                 using (FileStream sampleFs = new FileStream(sampleFile, FileMode.Open, FileAccess.Read, FileShare.Read))
-                using (XZOutputStream xz = new XZOutputStream(xzCompFs, Environment.ProcessorCount, preset, true))
+                using (XZOutputStream xz = new XZOutputStream(xzCompFs, threads, preset, true))
                 {
                     sampleFs.CopyTo(xz);
                 }
 
                 Process proc = new Process
                 {
-                    StartInfo = new ProcessStartInfo()
+                    StartInfo = new ProcessStartInfo
                     {
                         UseShellExecute = false,
                         CreateNoWindow = true,
