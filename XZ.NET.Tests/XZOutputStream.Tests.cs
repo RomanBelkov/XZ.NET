@@ -24,8 +24,8 @@ namespace XZ.NET.Tests
         [TestCategory("XZ.NET")]
         public void CompressMultithread()
         {
-            Compress_Template("A.pdf", Environment.ProcessorCount, 9);
-            Compress_Template("B.txt", Environment.ProcessorCount, XZOutputStream.DefaultPreset);
+            Compress_Template("A.pdf", 2, 6);
+            Compress_Template("B.txt", 2, 4);
             Compress_Template("C.bin", Environment.ProcessorCount, 1);
         }
 
